@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FundamentalOS SystemUI variant. Identity + custom appComponentFactory; the full application
+     node, all components and permissions merge in from SystemUI-application. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.android.systemui"
+          android:sharedUserId="android.uid.systemui"
+          coreApp="true">
+
+    <!-- Now Playing (AmbientIndication): stock SystemUIGoogle DEFINES this permission and holds it
+         to register the receiver; ASI (com.google.android.as) only USES it to send the
+         AMBIENT_INDICATION_* broadcasts. Without the definition the broadcasts are rejected. -->
+    <permission android:name="com.google.android.ambientindication.permission.AMBIENT_INDICATION"
+        android:protectionLevel="privileged|signature" />
+    <uses-permission android:name="com.google.android.ambientindication.permission.AMBIENT_INDICATION" />
+
+    <application
+        tools:replace="android:appComponentFactory"
+        android:appComponentFactory="com.android.systemui.fundamental.FundamentalSystemUIAppComponentFactory">
+    </application>
+</manifest>

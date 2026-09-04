@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: Apache-2.0
+  ~ Copyright (C) 2026 FundamentalOS
+  ~ Feature-owned values for the Now Playing lockscreen entry. Kept in a feature-unique file so the
+  ~ shared res/values/{dimens,strings}.xml are not touched.
+  -->
+<resources>
+    <!-- Size of an override / status icon in the ambient indication pill. -->
+    <dimen name="ambient_indication_icon_size">24dp</dimen>
+    <!-- Size of the passive music-note icon. -->
+    <dimen name="ambient_indication_note_icon_size">24dp</dimen>
+
+    <!-- Wallpaper-picker / settings name for the "search a song" lock screen shortcut. -->
+    <string name="now_playing_label">Now Playing</string>
+</resources>

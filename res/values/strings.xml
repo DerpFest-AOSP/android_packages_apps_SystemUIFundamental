@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: Apache-2.0
+  ~ Copyright (C) 2026 FundamentalOS
+  ~ Shared FundamentalOS SystemUI string resources. Feature-unique strings that a feature owns
+  ~ outright (e.g. now_playing_label) live in that feature's own values file.
+  -->
+<resources>
+    <!-- Wallpaper-picker / settings name for the Calculator lock screen shortcut. -->
+    <string name="fundamental_quick_affordance_calculator_label">Calculator</string>
+    <!-- Wallpaper-picker / settings name for the Calendar lock screen shortcut. -->
+    <string name="fundamental_quick_affordance_calendar_label">Calendar</string>
+</resources>

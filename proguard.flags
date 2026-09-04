@@ -1,0 +1,5 @@
+-include ../../../../frameworks/base/packages/SystemUI/proguard_common.flags
+
+# Back-gesture ML classifier: TFLite is JNI-backed and reflectively touched; keep it
+# whole under R8 optimization. (BackGestureTfClassifierProviderGoogle -> org.tensorflow.lite.*)
+-keep,allowoptimization,allowaccessmodification class org.tensorflow.** { *; }

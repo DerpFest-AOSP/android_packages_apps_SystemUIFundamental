@@ -1,0 +1,83 @@
+// SystemUIFundamental — FundamentalOS external SystemUI variant.
+//
+// Overrides the stock "SystemUI" app from an external module (no frameworks/base
+// patches). Structure mirrors AOSP packages/apps/SystemUIGo: a -core android_library
+// that wraps SystemUI-application/SystemUI-core and supplies a custom Dagger graph
+// (Fundamental* component/initializer/appComponentFactory), plus a thin android_app
+// that packages it and `overrides` SystemUI.
+//
+// The Dagger graph mirrors the default handheld ReferenceSysUIComponent but swaps
+// ReferenceSystemUIModule for FundamentalReferenceSystemUIModule (which swaps the
+// screenshot + back-gesture modules) and adds FundamentalModule (Now Playing,
+// BcSmartspace weather, quick affordances, pre-auth refresh-rate boost).
+
+android_library {
+    name: "SystemUIFundamental-core",
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
+    resource_dirs: [
+        "res",
+    ],
+    javacflags: [
+        "-Adagger.useBindingGraphFix=ENABLED",
+    ],
+    kotlincflags: ["-Xjvm-default=all"],
+    static_libs: [
+        "SystemUI-application",
+        "SystemUI-core",
+        "SystemUIPluginLib",
+        "SystemUISharedLib",
+        // Back-gesture ML classifier (BackGestureTfClassifierProviderGoogle).
+        "tensorflowlite_java",
+        // ASI matchmaker overview client for screenshot notification smart actions.
+        "fundamental-matchmaker-lib",
+        // Explicit (transitive today; DerpFest lists it) — matchmaker/guava users.
+        "guava",
+    ],
+    manifest: "AndroidManifest.xml",
+    plugins: ["dagger2-compiler"],
+}
+
+android_app {
+    name: "SystemUIFundamental",
+    defaults: [
+        "platform_app_defaults",
+        "SystemUI_optimized_defaults",
+        "wmshell_defaults",
+    ],
+    static_libs: [
+        "SystemUIFundamental-core",
+    ],
+    overrides: [
+        "SystemUI",
+    ],
+    resource_dirs: [],
+
+    // Back-gesture ML: TFLite JNI + uncompressed model assets, memory-mapped at runtime.
+    jni_libs: ["libtensorflowlite_jni"],
+    use_embedded_native_libs: true,
+    asset_dirs: ["assets"],
+    aaptflags: [
+        "-0 .tflite",
+        "-0 .vocab",
+    ],
+
+    platform_apis: true,
+    system_ext_specific: true,
+    certificate: "platform",
+    privileged: true,
+
+    javacflags: [
+        "-Adagger.useBindingGraphFix=ENABLED",
+    ],
+    kotlincflags: ["-Xjvm-default=all"],
+    dxflags: ["--multi-dex"],
+    optimize: {
+        proguard_flags_files: ["proguard.flags"],
+    },
+    required: [
+        "privapp_whitelist_com.android.systemui",
+    ],
+}

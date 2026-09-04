@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: Apache-2.0
+  ~ Copyright (C) 2026 FundamentalOS
+  ~ Shared FundamentalOS SystemUI config resources.
+  -->
+<resources>
+    <!-- Whether to request the max refresh rate before biometric auth for a snappier unlock.
+         Default true (correct for the UDFPS Pixel 9); override in the device runtime overlay
+         (vendor/fundamental/overlay) to force off/on per device. -->
+    <bool name="config_request_pre_auth_refresh_rate">true</bool>
+</resources>
