@@ -1,4 +1,15 @@
+# Shared SystemUI rules. Soong's included_proguard_flags_files (Android.bp) only declares these
+# as inputs of the R8 step; the -include lines are what actually applies them.
 -include ../../../frameworks/base/packages/SystemUI/proguard_common.flags
+-include ../../../frameworks/base/packages/SystemUI/proguard_kotlin.flags
+
+# Mirrors the stock SystemUI app rules: the initializer is named in
+# config_systemUIFactoryComponent and instantiated reflectively; the Dagger root component is
+# looked up by name.
+-keep class com.android.systemui.fundamental.FundamentalSystemUIInitializer {
+    *;
+}
+-keep,allowoptimization,allowaccessmodification class com.android.systemui.fundamental.DaggerFundamentalGlobalRootComponent** { !synthetic *; }
 
 # Back-gesture ML classifier: TFLite is JNI-backed and reflectively touched; keep it
 # whole under R8 optimization. (BackGestureTfClassifierProviderGoogle -> org.tensorflow.lite.*)
