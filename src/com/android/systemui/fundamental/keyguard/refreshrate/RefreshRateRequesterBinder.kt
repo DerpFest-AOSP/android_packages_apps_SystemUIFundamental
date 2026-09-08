@@ -59,7 +59,7 @@ constructor(
         }
     }
 
-    override fun dump(pw: PrintWriter, args: Array<String>) {
+    override fun dump(pw: PrintWriter, args: Array<out String>) {
         pw.println("enabled: " + resources.getBoolean(R.bool.config_request_pre_auth_refresh_rate))
     }
 }
