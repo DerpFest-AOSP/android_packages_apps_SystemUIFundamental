@@ -32,9 +32,12 @@ import com.android.systemui.accessibility.data.repository.AccessibilityRepositor
 import com.android.systemui.actioncorner.ActionCornerModule;
 import com.android.systemui.battery.BatterySaverModule;
 import com.android.systemui.clipboardoverlay.dagger.ClipboardOverlayOverrideModule;
-import com.android.systemui.communal.posturing.dagger.NoopPosturingModule;
-import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent;
+import com.android.systemui.communal.posturing.dagger.PosturingModule;
+import com.android.systemui.contextualcursor.ContextualCursorModule;
+import com.android.systemui.cursorposition.CursorPositionModule;
+import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.display.dagger.ReferenceSysUIDisplaySubcomponent;
+import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent;
 import com.android.systemui.display.data.repository.DisplayPhoneModule;
 import com.android.systemui.display.ui.viewmodel.ConnectingDisplayViewModel;
 import com.android.systemui.dock.DockManager;
@@ -43,21 +46,21 @@ import com.android.systemui.doze.DozeHost;
 import com.android.systemui.dreams.suppression.dagger.NoOpActivityRecognitionModule;
 import com.android.systemui.education.dagger.ContextualEducationModule;
 import com.android.systemui.emergency.EmergencyGestureModule;
+import com.android.systemui.fundamental.navigationbar.gestural.FundamentalGestureModule;
+import com.android.systemui.fundamental.screenshot.dagger.FundamentalScreenshotModule;
 import com.android.systemui.inputdevice.tutorial.KeyboardTouchpadTutorialModule;
+import com.android.systemui.inputmethod.ImeSwitcherMenuModule;
 import com.android.systemui.keyboard.shortcut.ShortcutHelperModule;
 import com.android.systemui.keyguard.dagger.KeyguardModule;
-import com.android.systemui.keyguard.ui.composable.blueprint.DefaultBlueprintModule;
 import com.android.systemui.keyguard.ui.view.layout.blueprints.KeyguardBlueprintModule;
 import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardSectionsModule;
-import com.android.systemui.lowlight.dagger.NoopAmbientLightModeMonitorModule;
+import com.android.systemui.lowlight.dagger.ScreenAwareLightModeMonitorModule;
 import com.android.systemui.media.dagger.MediaModule;
 import com.android.systemui.media.muteawait.MediaMuteAwaitConnectionCli;
 import com.android.systemui.media.nearby.NearbyMediaDevicesManager;
 import com.android.systemui.minmode.MinModeManager;
 import com.android.systemui.minmode.MinModeManagerImpl;
 import com.android.systemui.navigationbar.NavigationBarControllerModule;
-import com.android.systemui.dagger.SysUISingleton;
-import com.android.systemui.fundamental.navigationbar.gestural.FundamentalGestureModule;
 import com.android.systemui.plugins.qs.QSFactory;
 import com.android.systemui.power.dagger.PowerModule;
 import com.android.systemui.qs.QSFragmentStartableModule;
@@ -67,14 +70,12 @@ import com.android.systemui.reardisplay.RearDisplayModule;
 import com.android.systemui.recents.Recents;
 import com.android.systemui.recents.RecentsImplementation;
 import com.android.systemui.recents.RecentsModule;
-import com.android.systemui.rotationlock.DeviceStateAutoRotateModule;
 import com.android.systemui.rotationlock.RotationLockModule;
 import com.android.systemui.rotationlock.RotationLockNewModule;
 import com.android.systemui.scene.SceneContainerFrameworkModule;
-import com.android.systemui.fundamental.screenshot.dagger.FundamentalScreenshotModule;
+import com.android.systemui.screencapture.common.ScreenCaptureModule;
 import com.android.systemui.settings.MultiUserUtilsModule;
 import com.android.systemui.settings.UserTracker;
-import com.android.systemui.settings.brightness.dagger.BrightnessSliderModule;
 import com.android.systemui.shade.NotificationShadeWindowControllerImpl;
 import com.android.systemui.shade.ShadeModule;
 import com.android.systemui.startable.Dependencies;
@@ -91,7 +92,6 @@ import com.android.systemui.statusbar.phone.CentralSurfaces;
 import com.android.systemui.statusbar.phone.DozeServiceHost;
 import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager;
 import com.android.systemui.statusbar.phone.dagger.StatusBarPhoneModule;
-import com.android.systemui.statusbar.phone.fragment.CollapsedStatusBarFragmentStartableModule;
 import com.android.systemui.statusbar.policy.AospPolicyModule;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController;
 import com.android.systemui.statusbar.policy.DeviceProvisionedControllerImpl;
@@ -99,6 +99,7 @@ import com.android.systemui.statusbar.policy.IndividualSensorPrivacyController;
 import com.android.systemui.statusbar.policy.IndividualSensorPrivacyControllerImpl;
 import com.android.systemui.statusbar.policy.SensorPrivacyController;
 import com.android.systemui.statusbar.policy.SensorPrivacyControllerImpl;
+import com.android.systemui.statusbar.policy.dagger.SmartRepliesInflationModule;
 import com.android.systemui.toast.ToastModule;
 import com.android.systemui.topwindoweffects.dagger.TopLevelWindowEffectsModule;
 import com.android.systemui.touchpad.tutorial.TouchpadTutorialModule;
@@ -140,13 +141,10 @@ import javax.inject.Provider;
         AccessibilityRepositoryModule.class,
         AospPolicyModule.class,
         BatterySaverModule.class,
-        BrightnessSliderModule.class,
         CentralSurfacesModule.class,
         ClipboardOverlayOverrideModule.class,
-        CollapsedStatusBarFragmentStartableModule.class,
         ConnectingDisplayViewModel.StartableModule.class,
-        DefaultBlueprintModule.class,
-        DeviceStateAutoRotateModule.class,
+        ImeSwitcherMenuModule.class,
         DisplayPhoneModule.class,
         EmergencyGestureModule.class,
         FundamentalGestureModule.class,
@@ -167,17 +165,18 @@ import javax.inject.Provider;
         RearDisplayModule.class,
         RecentsModule.class,
         ReferenceNotificationsModule.class,
-        NoopPosturingModule.class,
-        NoopAmbientLightModeMonitorModule.class,
+        PosturingModule.class,
         FundamentalScreenshotModule.class,
         RotationLockModule.class,
         RotationLockNewModule.class,
+        ScreenCaptureModule.class,
         ScreenDecorationsModule.class,
         StatusBarPhoneModule.class,
         SystemActionsModule.class,
         ShadeModule.class,
         StartCentralSurfacesModule.class,
         SceneContainerFrameworkModule.class,
+        ScreenAwareLightModeMonitorModule.class,
         SysUICoroutinesModule.class,
         SysUIUnfoldStartableModule.class,
         UnfoldTransitionModule.Startables.class,
@@ -187,8 +186,11 @@ import javax.inject.Provider;
         VolumeModule.class,
         WallpaperModule.class,
         ShortcutHelperModule.class,
+        SmartRepliesInflationModule.class,
         ContextualEducationModule.class,
         ActionCornerModule.class,
+        CursorPositionModule.class,
+        ContextualCursorModule.class,
 }, subcomponents = {
         ReferenceSysUIDisplaySubcomponent.class
 })
