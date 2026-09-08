@@ -92,7 +92,6 @@ public final class BcSmartspaceDataProvider implements BcSmartspaceDataPlugin {
         }
     }
 
-    @Override
     public void registerConfigProvider(BcSmartspaceConfigPlugin configProvider) {
         mConfigProvider = configProvider;
     }

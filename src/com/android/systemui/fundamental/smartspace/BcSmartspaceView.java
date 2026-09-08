@@ -120,7 +120,6 @@ public class BcSmartspaceView extends LinearLayout
         mDataProvider = plugin;
     }
 
-    @Override
     public void registerConfigProvider(BcSmartspaceConfigPlugin configProvider) {
         // Carousel/ViewPager2 toggles do not apply to this single-card view.
     }

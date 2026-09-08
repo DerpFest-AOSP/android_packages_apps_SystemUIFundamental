@@ -128,7 +128,6 @@ public class WeatherSmartspaceView extends LinearLayout
         mDataProvider = plugin;
     }
 
-    @Override
     public void registerConfigProvider(BcSmartspaceConfigPlugin configProvider) {
     }
 

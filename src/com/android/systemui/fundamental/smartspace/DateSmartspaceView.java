@@ -191,7 +191,6 @@ public class DateSmartspaceView extends LinearLayout
         // The date is self-driven; it does not consume smartspace targets.
     }
 
-    @Override
     public void registerConfigProvider(BcSmartspaceConfigPlugin configProvider) {
     }
 
