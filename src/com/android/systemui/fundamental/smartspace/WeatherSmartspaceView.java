@@ -25,7 +25,6 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.android.systemui.plugins.BcSmartspaceConfigPlugin;
 import com.android.systemui.plugins.BcSmartspaceDataPlugin;
 import com.android.systemui.plugins.FalsingManager;
 
@@ -126,9 +125,6 @@ public class WeatherSmartspaceView extends LinearLayout
     @Override
     public void registerDataProvider(BcSmartspaceDataPlugin plugin) {
         mDataProvider = plugin;
-    }
-
-    public void registerConfigProvider(BcSmartspaceConfigPlugin configProvider) {
     }
 
     @Override

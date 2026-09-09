@@ -28,7 +28,6 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import com.android.systemui.plugins.BcSmartspaceConfigPlugin;
 import com.android.systemui.plugins.BcSmartspaceDataPlugin;
 import com.android.systemui.plugins.FalsingManager;
 
@@ -189,9 +188,6 @@ public class DateSmartspaceView extends LinearLayout
     @Override
     public void registerDataProvider(BcSmartspaceDataPlugin plugin) {
         // The date is self-driven; it does not consume smartspace targets.
-    }
-
-    public void registerConfigProvider(BcSmartspaceConfigPlugin configProvider) {
     }
 
     @Override
