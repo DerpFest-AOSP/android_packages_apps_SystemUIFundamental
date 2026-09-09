@@ -2,25 +2,40 @@
 <!--
   ~ SPDX-License-Identifier: Apache-2.0
   ~ Copyright (C) 2026 FundamentalOS
-  ~ Info row pinned to the bottom of the container (icon/text sit above the device-entry icon).
+  ~ Info row pinned to the bottom of the container (the card sits above the device-entry icon).
+  ~ A17 stock set minus the Dreamliner docked_top_icon constraint.
   -->
 <ConstraintSet xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Constraint
         android:id="@+id/ambient_indication_info_container"
-        android:layout_width="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
     <Constraint
         android:id="@+id/ambient_indication_icon"
+        android:layout_gravity="center"
         android:visibility="gone"
+        android:clickable="true"
         android:layout_width="48dp"
-        android:layout_height="48dp" />
+        android:layout_height="48dp"
+        android:scaleType="center" />
     <Constraint
         android:id="@+id/ambient_indication_text"
+        android:textAppearance="@style/TextAppearance.Keyguard.BottomArea"
+        android:textSize="14sp"
+        android:gravity="center_vertical"
+        android:layout_gravity="center"
+        android:paddingTop="15sp"
+        android:paddingBottom="15sp"
         android:visibility="gone"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:letterSpacing="0.02"
+        android:forceHasOverlappingRendering="false" />
 </ConstraintSet>

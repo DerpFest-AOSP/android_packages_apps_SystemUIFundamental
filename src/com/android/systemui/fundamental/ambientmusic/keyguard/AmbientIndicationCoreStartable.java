@@ -49,6 +49,7 @@ public final class AmbientIndicationCoreStartable implements CoreStartable {
                 mInteractor, mAlarmManager, mSelectedUserInteractor);
         IntentFilter filter = new IntentFilter();
         filter.addAction(AmbientIndicationService.ACTION_SHOW);
+        filter.addAction(AmbientIndicationService.ACTION_EXPAND);
         filter.addAction(AmbientIndicationService.ACTION_HIDE);
         filter.addAction(AmbientIndicationService.ACTION_UPDATE_QUICK_AFFORDANCE_STATE);
         mContext.registerReceiverAsUser(service, UserHandle.ALL, filter,

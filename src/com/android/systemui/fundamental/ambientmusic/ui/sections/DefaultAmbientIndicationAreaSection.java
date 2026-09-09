@@ -12,30 +12,38 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 
 import com.android.systemui.biometrics.AuthController;
+import com.android.systemui.common.ui.domain.interactor.ConfigurationInteractor;
+import com.android.systemui.dagger.qualifiers.Background;
+import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.fundamental.ambientmusic.ui.binder.KeyguardAmbientIndicationAreaViewBinder;
 import com.android.systemui.fundamental.ambientmusic.ui.viewmodel.KeyguardAmbientIndicationViewModel;
+import com.android.systemui.graphics.ImageLoader;
 import com.android.systemui.keyguard.domain.interactor.KeyguardInteractor;
 import com.android.systemui.keyguard.shared.model.KeyguardSection;
+import com.android.systemui.keyguard.ui.viewmodel.KeyguardRootViewModel;
+import com.android.systemui.media.NotificationMediaManager;
 import com.android.systemui.plugins.ActivityStarter;
+import com.android.systemui.plugins.FalsingManager;
+import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.power.domain.interactor.PowerInteractor;
 import com.android.systemui.res.R;
+import com.android.systemui.util.concurrency.DelayableExecutor;
 import com.android.systemui.util.wakelock.DelayedWakeLock;
+
+import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
 import kotlinx.coroutines.DisposableHandle;
 
 /**
- * Places the passive Now Playing container in the keyguard root view. Bound to the AOSP seam
+ * Places the Now Playing container in the keyguard root view. Bound to the AOSP seam
  * {@code @Named(KEYGUARD_AMBIENT_INDICATION_AREA_SECTION) KeyguardSection}.
  */
 public final class DefaultAmbientIndicationAreaSection extends KeyguardSection {
 
     private final KeyguardAmbientIndicationViewModel mViewModel;
-    private final PowerInteractor mPowerInteractor;
-    private final ActivityStarter mActivityStarter;
-    private final DelayedWakeLock.Factory mWakeLockFactory;
-    private final KeyguardInteractor mKeyguardInteractor;
+    private final KeyguardAmbientIndicationAreaViewBinder.Dependencies mDeps;
     private final AuthController mAuthController;
 
     private DisposableHandle mHandle;
@@ -47,13 +55,31 @@ public final class DefaultAmbientIndicationAreaSection extends KeyguardSection {
             ActivityStarter activityStarter,
             DelayedWakeLock.Factory wakeLockFactory,
             KeyguardInteractor keyguardInteractor,
+            @Main ConfigurationInteractor configurationInteractor,
+            ImageLoader imageLoader,
+            KeyguardRootViewModel keyguardRootViewModel,
+            FalsingManager falsingManager,
+            @Main DelayableExecutor mainDelayableExecutor,
+            @Background Executor backgroundExecutor,
+            NotificationMediaManager notificationMediaManager,
+            StatusBarStateController statusBarStateController,
             AuthController authController) {
         mViewModel = viewModel;
-        mPowerInteractor = powerInteractor;
-        mActivityStarter = activityStarter;
-        mWakeLockFactory = wakeLockFactory;
-        mKeyguardInteractor = keyguardInteractor;
         mAuthController = authController;
+        mDeps = new KeyguardAmbientIndicationAreaViewBinder.Dependencies(
+                powerInteractor,
+                activityStarter,
+                wakeLockFactory,
+                keyguardInteractor,
+                configurationInteractor,
+                imageLoader,
+                keyguardRootViewModel,
+                falsingManager,
+                mainDelayableExecutor,
+                backgroundExecutor,
+                notificationMediaManager,
+                statusBarStateController,
+                authController);
     }
 
     @Override
@@ -90,9 +116,7 @@ public final class DefaultAmbientIndicationAreaSection extends KeyguardSection {
 
     @Override
     public void bindData(ConstraintLayout constraintLayout) {
-        mHandle = KeyguardAmbientIndicationAreaViewBinder.bind(
-                constraintLayout, mViewModel, mPowerInteractor, mActivityStarter,
-                mWakeLockFactory, mKeyguardInteractor);
+        mHandle = KeyguardAmbientIndicationAreaViewBinder.bind(constraintLayout, mViewModel, mDeps);
     }
 
     @Override

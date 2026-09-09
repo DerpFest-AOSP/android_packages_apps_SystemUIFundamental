@@ -10,9 +10,13 @@ import android.content.Intent;
 
 import com.android.systemui.animation.Expandable;
 import com.android.systemui.broadcast.BroadcastSender;
+import com.android.systemui.common.shared.model.ContentDescription;
 import com.android.systemui.common.shared.model.Icon;
 import com.android.systemui.dagger.qualifiers.Application;
+import com.android.systemui.fundamental.ambientmusic.AmbientIndicationFlows;
 import com.android.systemui.fundamental.ambientmusic.AmbientIndicationService;
+import com.android.systemui.fundamental.ambientmusic.data.AmbientIndicationRepository;
+import com.android.systemui.fundamental.ambientmusic.shared.AmbientIndicationMusicStatus;
 import com.android.systemui.keyguard.data.quickaffordance.KeyguardQuickAffordanceConfig;
 import com.android.systemui.keyguard.shared.quickaffordance.ActivationState;
 import com.android.systemui.R;
@@ -23,12 +27,12 @@ import javax.inject.Inject;
 
 import kotlin.coroutines.Continuation;
 import kotlinx.coroutines.flow.Flow;
-import kotlinx.coroutines.flow.FlowKt;
 
 /**
  * Lock-screen "search a song" quick affordance. When triggered it fires ASI's on-demand
- * recognition broadcast. The lock-screen button is always available (v1 does not gate on the
- * ASI-reported enable state; see feature blockers).
+ * recognition broadcast. Like the A17 stock config the button is always visible; its
+ * active/inactive highlight follows ASI's UPDATE_QUICK_AFFORDANCE_STATE broadcasts, and ASI is
+ * asked for the current state (AQA_GET_STATUS) whenever the lock-screen state is collected.
  */
 public final class NowPlayingQuickAffordanceConfig implements KeyguardQuickAffordanceConfig {
 
@@ -36,6 +40,8 @@ public final class NowPlayingQuickAffordanceConfig implements KeyguardQuickAffor
 
     private static final String ACTION_AQA_CLICK =
             "com.google.intelligence.sense.ambientmusic.ondemand.AQA_CLICK";
+    private static final String ACTION_AQA_GET_STATUS =
+            "com.google.intelligence.sense.ambientmusic.ondemand.AQA_GET_STATUS";
     private static final String AS_PACKAGE = "com.google.android.as";
     private static final String AS_RECEIVER =
             "com.google.intelligence.sense.ondemand.SystemUiBroadcastReceiver";
@@ -47,14 +53,28 @@ public final class NowPlayingQuickAffordanceConfig implements KeyguardQuickAffor
     private final Flow mLockScreenState;
 
     @Inject
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public NowPlayingQuickAffordanceConfig(
             @Application Context context,
-            BroadcastSender broadcastSender) {
+            BroadcastSender broadcastSender,
+            AmbientIndicationRepository repository) {
         mContext = context;
         mBroadcastSender = broadcastSender;
-        mLockScreenState = FlowKt.flowOf(new KeyguardQuickAffordanceConfig.LockScreenState.Visible(
-                new Icon.Resource(R.drawable.fundamental_ic_now_playing_lockscreen, null),
-                ActivationState.NotSupported.INSTANCE));
+        mLockScreenState = AmbientIndicationFlows.map(
+                AmbientIndicationFlows.onStart(repository.ambientMusicStatus, this::requestStatus),
+                status -> new KeyguardQuickAffordanceConfig.LockScreenState.Visible(
+                        new Icon.Resource(R.drawable.fundamental_ic_now_playing_lockscreen,
+                                new ContentDescription.Resource(R.string.now_playing_label)),
+                        ((AmbientIndicationMusicStatus) status).isActive
+                                ? ActivationState.Active.INSTANCE
+                                : ActivationState.Inactive.INSTANCE));
+    }
+
+    /** Asks ASI to (re)broadcast UPDATE_QUICK_AFFORDANCE_STATE. */
+    private void requestStatus() {
+        Intent intent = new Intent(ACTION_AQA_GET_STATUS);
+        intent.setComponent(new ComponentName(AS_PACKAGE, AS_RECEIVER));
+        mBroadcastSender.sendBroadcast(intent, AmbientIndicationService.PERMISSION);
     }
 
     @Override

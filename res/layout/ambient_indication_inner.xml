@@ -2,42 +2,172 @@
 <!--
   ~ SPDX-License-Identifier: Apache-2.0
   ~ Copyright (C) 2026 FundamentalOS
+  ~
+  ~ A17 stock structure: the 80dp "wrapper" card holds the album-art background, the collapsed
+  ~ row (icon + real/temp title-artist text sets used by the song-change slide) and the
+  ~ like / play action pills. The Dreamliner dock icon and the Gemini Space block that stock
+  ~ also inflates here are not carried over.
   -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/ambient_indication"
     android:orientation="vertical"
-    android:paddingTop="4dp"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:forceHasOverlappingRendering="false">
     <LinearLayout
         android:id="@+id/ambient_indication_info_container"
         android:layout_gravity="center"
         android:orientation="horizontal"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <ImageView
-            android:id="@+id/ambient_indication_icon"
+        <FrameLayout
+            android:id="@+id/ambient_indication_wrapper_container"
             android:layout_gravity="center"
-            android:visibility="gone"
-            android:clickable="true"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:scaleType="center" />
-        <TextView
-            android:id="@+id/ambient_indication_text"
-            android:textAppearance="@style/TextAppearance.Keyguard.BottomArea"
-            android:textSize="14sp"
-            android:gravity="center_vertical"
-            android:layout_gravity="center"
-            android:paddingTop="15sp"
-            android:paddingBottom="15sp"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:letterSpacing="0.02"
-            android:forceHasOverlappingRendering="false" />
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginHorizontal="16dp"
+            android:importantForAccessibility="no">
+            <ImageView
+                android:id="@+id/ambient_indication_container_background"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:clickable="false"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="center"
+                android:importantForAccessibility="no" />
+            <FrameLayout
+                android:id="@+id/ambient_indication_extended_container"
+                android:gravity="center"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <LinearLayout
+                    android:id="@+id/ambient_indication_collapsed_container"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <ImageView
+                        android:id="@+id/ambient_indication_icon"
+                        android:background="@android:color/transparent"
+                        android:visibility="gone"
+                        android:clickable="true"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:scaleType="center"
+                        android:importantForAccessibility="no" />
+                    <FrameLayout
+                        android:id="@+id/ambient_indication_text_container"
+                        android:gravity="start|center_vertical"
+                        android:clipChildren="false"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="2dp"
+                        android:paddingEnd="14dp">
+                        <LinearLayout
+                            android:id="@+id/text_set_real"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="vertical"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
+                            <TextView
+                                android:id="@+id/ambient_indication_text"
+                                android:textAppearance="@style/TextAppearance.Keyguard.BottomArea"
+                                android:textSize="14sp"
+                                android:visibility="gone"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:maxLines="1"
+                                android:shadowColor="@android:color/transparent"
+                                android:forceHasOverlappingRendering="false" />
+                            <TextView
+                                android:id="@+id/ambient_indication_text_extended"
+                                android:textAppearance="@style/TextAppearance.Keyguard.BottomArea"
+                                android:textSize="14sp"
+                                android:visibility="gone"
+                                android:clickable="false"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:maxLines="1"
+                                android:shadowColor="@android:color/transparent"
+                                android:importantForAccessibility="no"
+                                android:forceHasOverlappingRendering="false" />
+                        </LinearLayout>
+                        <LinearLayout
+                            android:id="@+id/text_set_temp"
+                            android:orientation="vertical"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:alpha="0">
+                            <TextView
+                                android:id="@+id/ambient_indication_text_temp"
+                                android:textAppearance="@style/TextAppearance.Keyguard.BottomArea"
+                                android:textSize="14sp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:maxLines="1"
+                                android:shadowColor="@android:color/transparent"
+                                android:importantForAccessibility="no"
+                                android:forceHasOverlappingRendering="false" />
+                            <TextView
+                                android:id="@+id/ambient_indication_text_extended_temp"
+                                android:textAppearance="@style/TextAppearance.Keyguard.BottomArea"
+                                android:textSize="14sp"
+                                android:clickable="false"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:maxLines="1"
+                                android:shadowColor="@android:color/transparent"
+                                android:importantForAccessibility="no"
+                                android:forceHasOverlappingRendering="false" />
+                        </LinearLayout>
+                    </FrameLayout>
+                </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/ambient_indication_action_container"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:orientation="horizontal"
+                    android:visibility="gone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:importantForAccessibility="no">
+                    <FrameLayout
+                        android:id="@+id/ambient_indication_like_container"
+                        android:layout_gravity="center"
+                        android:background="@drawable/fundamental_rounded_rectangle_20dp"
+                        android:padding="12dp"
+                        android:clickable="true"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp">
+                        <ImageView
+                            android:id="@+id/ambient_indication_like_icon"
+                            android:layout_gravity="center"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:scaleType="fitCenter" />
+                    </FrameLayout>
+                    <FrameLayout
+                        android:id="@+id/ambient_indication_play_container"
+                        android:layout_gravity="center"
+                        android:background="@drawable/fundamental_rounded_rectangle_20dp"
+                        android:visibility="gone"
+                        android:clickable="true"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="4dp">
+                        <ImageView
+                            android:id="@+id/ambient_indication_play_icon"
+                            android:layout_gravity="center"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:scaleType="fitCenter"
+                            android:contentDescription="@string/fundamental_accessibility_now_playing_play_icon" />
+                    </FrameLayout>
+                </LinearLayout>
+            </FrameLayout>
+        </FrameLayout>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

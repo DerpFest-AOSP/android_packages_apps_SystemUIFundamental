@@ -3,14 +3,40 @@
   ~ SPDX-License-Identifier: Apache-2.0
   ~ Copyright (C) 2026 FundamentalOS
   ~ Feature-owned values for the Now Playing lockscreen entry. Kept in a feature-unique file so the
-  ~ shared res/values/{dimens,strings}.xml are not touched.
+  ~ shared res/values/{dimens,strings}.xml are not touched. Values track A17 stock SystemUIGoogle.
   -->
 <resources>
-    <!-- Size of an override / status icon in the ambient indication pill. -->
-    <dimen name="ambient_indication_icon_size">24dp</dimen>
+    <!-- Size of an override / status icon in the ambient indication row. -->
+    <dimen name="ambient_indication_icon_size">20dp</dimen>
     <!-- Size of the passive music-note icon. -->
-    <dimen name="ambient_indication_note_icon_size">24dp</dimen>
+    <dimen name="ambient_indication_note_icon_size">14dp</dimen>
+    <!-- Card width reserved for the icon, paddings and the like/play pills; the rest is text. -->
+    <dimen name="ambient_indication_extended_container_non_text_width">212dp</dimen>
+    <dimen name="ambient_indication_extended_text_container_end_padding">14dp</dimen>
+    <dimen name="ambient_indication_extended_text_container_start_padding_collapsed">2dp</dimen>
+    <dimen name="ambient_indication_extended_text_container_start_padding_expanded">16dp</dimen>
+    <!-- Entrance offsets for the first recognition, a song change and the searching state. -->
+    <dimen name="ambient_indication_first_recognition_animation_translation_y">21.5dp</dimen>
+    <dimen name="ambient_indication_song_change_animation_translation_y">21.5dp</dimen>
+    <dimen name="ambient_indication_song_searching_animation_translation_y">12dp</dimen>
+
+    <!-- Backdrop behind the album art when no Monet scheme could be derived. -->
+    <color name="fundamental_now_playing_artwork_fallback_color">#ff4db6ac</color>
+    <!-- Thumbnail backdrop behind the icon when the expanded card has no album art. -->
+    <color name="fundamental_now_playing_icon_thumbnail_background">#fff5f5f5</color>
 
     <!-- Wallpaper-picker / settings name for the "search a song" lock screen shortcut. -->
     <string name="now_playing_label">Now Playing</string>
+    <!-- Accessibility action label on the collapsed Now Playing row. -->
+    <string name="fundamental_accessibility_action_expand">Expand</string>
+    <!-- Announced for a recognised song: %1$s = title, %2$s = artist. -->
+    <string name="fundamental_accessibility_now_playing_container_recognition_result_content_description">Identified song. %1$s, %2$s.</string>
+    <!-- Announced while ASI is still identifying the song. -->
+    <string name="fundamental_accessibility_now_playing_container_song_searching_content_description">Identifying song</string>
+    <!-- Like button when the song is already a favourite. -->
+    <string name="fundamental_accessibility_now_playing_like_icon">Remove from favorites</string>
+    <!-- Play button that opens the default music player. -->
+    <string name="fundamental_accessibility_now_playing_play_icon">Play on Default Music Player</string>
+    <!-- Like button when the song is not yet a favourite. -->
+    <string name="fundamental_accessibility_now_playing_unlike_icon">Add to favorites</string>
 </resources>

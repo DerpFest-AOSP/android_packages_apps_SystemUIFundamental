@@ -9,6 +9,7 @@ import android.app.PendingIntent;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.fundamental.ambientmusic.data.AmbientIndicationRepository;
 import com.android.systemui.fundamental.ambientmusic.shared.AmbientIndicationMusic;
+import com.android.systemui.fundamental.ambientmusic.shared.ExtendedIndication;
 import com.android.systemui.keyguard.domain.interactor.KeyguardInteractor;
 
 import javax.inject.Inject;
@@ -55,9 +56,11 @@ public final class AmbientIndicationInteractor {
             PendingIntent favoritingIntent,
             Integer iconOverride,
             Boolean skipUnlock,
-            String iconDescription) {
+            String iconDescription,
+            ExtendedIndication extendedIndication) {
         mRepository.setAmbientMusic(new AmbientIndicationMusic(
-                text, openIntent, favoritingIntent, iconOverride, skipUnlock, iconDescription));
+                text, openIntent, favoritingIntent, iconOverride, skipUnlock, iconDescription,
+                extendedIndication));
         mKeyguardInteractor.setAmbientIndicationVisible(true);
     }
 }
