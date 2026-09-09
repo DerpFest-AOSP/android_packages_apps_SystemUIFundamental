@@ -2,21 +2,23 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (C) 2026 FundamentalOS
  *
- * Ported from com.google.android.systemui.screenshot.surfaceeffects.gloweffect.GlowPieEffect.
+ * Ported from com.google.android.systemui.screenshot.surfaceeffects.gloweffect.GlowPieEffect
+ * (Android 17 / CP2A revision).
  *
  * Draws an animated glowing border made of three overlapping "pie" arcs sweeping around a
- * rounded-box SDF. The per-frame uniform math is reproduced faithfully from the stock
- * animator update listener; the animator wrapper (0..1 over 3500 ms) was reconstructed to be
- * functionally equivalent (the stock wrapper was inlined by R8 into the screenshot executor).
+ * rounded-box SDF. The per-frame uniform math is reproduced faithfully from the stock animator
+ * update listener. Like the stock class (whose wrapper R8 inlined into the screenshot executor)
+ * the shader, config and the 0..1 / 3500 ms animator are built once when the effect is created;
+ * play() only rewinds the pies and (re)starts the animator, and is a no-op while it is running.
  *
  * Unlike the stock class the three glow definitions are held as instance fields (the stock code
- * kept them as process-wide static singletons); this keeps concurrent effects independent.
+ * keeps them as process-wide static singletons); this keeps concurrent effects independent. The
+ * animator update listener is also registered once here instead of on every play().
  */
 package com.android.systemui.fundamental.screenshot.surfaceeffects.gloweffect;
 
 import android.animation.ValueAnimator;
 import android.graphics.RenderEffect;
-import android.view.animation.LinearInterpolator;
 
 import com.android.systemui.fundamental.screenshot.surfaceeffects.RevealDrawCallback;
 import com.android.systemui.fundamental.screenshot.surfaceeffects.utils.MathUtils;
@@ -30,59 +32,67 @@ public final class GlowPieEffect {
     private final GlowPie mFirstGlowPie = new FirstGlowPie();
     private final GlowPie mSecondGlowPie = new SecondGlowPie();
 
-    private GlowPieShader mShader;
-    private ValueAnimator mAnimator;
+    private final GlowPieShader mShader;
+    private final ValueAnimator mAnimator;
+    private final RevealDrawCallback mDrawCallback;
 
-    /** Builds the shader, applies {@code config}, and starts the border-glow animation. */
-    public void play(GlowPieEffectConfig config, RevealDrawCallback drawCallback) {
+    /** Builds the shader, applies {@code config} and prepares the border-glow animator. */
+    public GlowPieEffect(GlowPieEffectConfig config, RevealDrawCallback drawCallback) {
+        mDrawCallback = drawCallback;
         mShader = new GlowPieShader();
         mShader.applyConfig(config);
-        mBaseGlow.setProgress(1f);
 
-        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
-        animator.setDuration(DURATION_MS);
-        animator.setInterpolator(new LinearInterpolator());
-        animator.addUpdateListener(anim -> {
-            float time = anim.getCurrentPlayTime();
-            mBaseGlow.setTime(time);
-            mFirstGlowPie.updateProgress(time);
-            mSecondGlowPie.updateProgress(time);
+        mAnimator = ValueAnimator.ofFloat(0f, 1f);
+        mAnimator.setDuration(DURATION_MS);
+        mAnimator.addUpdateListener(this::onAnimationUpdate);
+    }
 
-            mShader.setFloatUniform("in_angles",
-                    new float[] {0f, mFirstGlowPie.angle(), mSecondGlowPie.angle()});
-            mShader.setFloatUniform("in_bottomThresholds", new float[] {
-                    0f,
-                    mFirstGlowPie.getProgress() * -1.63f + 1f,
-                    mSecondGlowPie.getProgress() * -1.63f + 1f});
-            mShader.setFloatUniform("in_topThresholds", new float[] {
-                    0f,
-                    mFirstGlowPie.getProgress() * -1.63f + 1.63f,
-                    mSecondGlowPie.getProgress() * -1.63f + 1.63f});
-            mShader.setFloatUniform("in_alphas", new float[] {
-                    mBaseGlow.alpha(), mFirstGlowPie.alpha(), mSecondGlowPie.alpha()});
-
-            drawCallback.onDraw(RenderEffect.createRuntimeShaderEffect(mShader, "in_dst"));
-        });
-        mAnimator = animator;
-        animator.start();
+    /** Rewinds the sweeping pies and starts the glow; ignored while the glow is running. */
+    public void play() {
+        if (mAnimator.isRunning()) {
+            return;
+        }
+        mFirstGlowPie.setProgress(0f);
+        mFirstGlowPie.setTime(0f);
+        mSecondGlowPie.setProgress(0f);
+        mSecondGlowPie.setTime(0f);
+        mAnimator.start();
     }
 
     /** Reapplies a (typically resized) config to the live shader. */
     public void updateConfig(GlowPieEffectConfig config) {
-        if (mShader != null) {
-            mShader.applyConfig(config);
-        }
+        mShader.applyConfig(config);
     }
 
     public boolean isPlaying() {
-        return mAnimator != null && mAnimator.isRunning();
+        return mAnimator.isRunning();
     }
 
     /** Cancels the animation if running. */
     public void finish() {
-        if (mAnimator != null) {
-            mAnimator.cancel();
-        }
+        mAnimator.cancel();
+    }
+
+    private void onAnimationUpdate(ValueAnimator anim) {
+        float time = anim.getCurrentPlayTime();
+        mBaseGlow.setTime(time);
+        mFirstGlowPie.updateProgress(time);
+        mSecondGlowPie.updateProgress(time);
+
+        mShader.setFloatUniform("in_angles",
+                new float[] {0f, mFirstGlowPie.angle(), mSecondGlowPie.angle()});
+        mShader.setFloatUniform("in_bottomThresholds", new float[] {
+                0f,
+                mFirstGlowPie.getProgress() * -1.63f + 1f,
+                mSecondGlowPie.getProgress() * -1.63f + 1f});
+        mShader.setFloatUniform("in_topThresholds", new float[] {
+                0f,
+                mFirstGlowPie.getProgress() * -1.63f + 1.63f,
+                mSecondGlowPie.getProgress() * -1.63f + 1.63f});
+        mShader.setFloatUniform("in_alphas", new float[] {
+                mBaseGlow.alpha(), mFirstGlowPie.alpha(), mSecondGlowPie.alpha()});
+
+        mDrawCallback.onDraw(RenderEffect.createRuntimeShaderEffect(mShader, "in_dst"));
     }
 
     /**

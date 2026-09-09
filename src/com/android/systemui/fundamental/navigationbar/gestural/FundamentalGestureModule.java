@@ -14,7 +14,6 @@
  */
 package com.android.systemui.fundamental.navigationbar.gestural;
 
-import android.content.Context;
 import android.provider.DeviceConfig;
 
 import com.android.systemui.navigationbar.gestural.BackGestureTfClassifierProvider;
@@ -34,13 +33,14 @@ public interface FundamentalGestureModule {
     /**
      * Provides the Pixel TFLite-backed classifier. Unscoped: EdgeBackGestureHandler injects a
      * {@code Provider<BackGestureTfClassifierProvider>} and constructs a fresh instance each time
-     * gesture-nav ML loading is (re)triggered, releasing it when disabled.
+     * gesture-nav ML loading is (re)triggered, releasing it when disabled. Mirrors the stock
+     * GestureModule#providsBackGestureTfClassifierProvider(@Named model name): the instance only
+     * records the asset names, the model is memory-mapped lazily from loadVocab().
      */
     @Provides
-    static BackGestureTfClassifierProvider provideBackGestureTfClassifierProvider(
-            Context context) {
+    static BackGestureTfClassifierProvider provideBackGestureTfClassifierProvider() {
         String modelName = DeviceConfig.getString(
                 DeviceConfig.NAMESPACE_SYSTEMUI, BACK_GESTURE_ML_MODEL_NAME, DEFAULT_MODEL_NAME);
-        return new BackGestureTfClassifierProviderGoogle(context.getAssets(), modelName);
+        return new BackGestureTfClassifierProviderGoogle(modelName);
     }
 }

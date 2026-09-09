@@ -4,14 +4,14 @@
  *
  * Dagger module for the FundamentalOS screenshot reveal effects. It provides a
  * FundamentalThumbnailObserver in place of the stock ThumbnailObserver so the effects are wired
- * into the screenshot preview via the AOSP seam.
+ * into the screenshot preview via the AOSP seam (stock: GoogleScreenshotModule#providesThumbnailObserver).
  *
  * IMPORTANT (integration): AOSP's ReferenceScreenshotModule ALREADY has
  *   @Provides static ThumbnailObserver providesThumbnailObserver()
  * and it is pulled into the graph transitively (ReferenceSystemUIModule -> ReferenceScreenshotModule
  * -> FundamentalSysUIComponent). Dagger forbids two providers for the same type, so this module and
- * that provider cannot both be present. See the integration notes for how to resolve it (remove /
- * repoint the AOSP provider), since those files are outside this feature's writable area.
+ * that provider cannot both be present; FundamentalReferenceSystemUIModule swaps
+ * ReferenceScreenshotModule for FundamentalScreenshotModule (which includes this module).
  */
 package com.android.systemui.fundamental.screenshot.dagger;
 
