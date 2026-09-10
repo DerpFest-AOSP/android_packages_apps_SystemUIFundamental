@@ -9,7 +9,9 @@
 // The Dagger graph mirrors the default handheld ReferenceSysUIComponent but swaps
 // ReferenceSystemUIModule for FundamentalReferenceSystemUIModule (which swaps the
 // screenshot + back-gesture modules) and adds FundamentalModule (Now Playing,
-// BcSmartspace weather, quick affordances, pre-auth refresh-rate boost).
+// quick affordances, pre-auth refresh-rate boost). Lockscreen Smartspace stays
+// the Google BcSmartspace implementation already compiled into SystemUI-core so
+// Smartspacer can detect com.google.android.systemui.smartspace.* classes.
 
 android_library {
     name: "SystemUIFundamental-core",

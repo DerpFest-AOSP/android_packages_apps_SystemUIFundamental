@@ -10,17 +10,19 @@ import dagger.Module;
  * FundamentalOS SystemUI additions. Each feature ships a self-contained Dagger module that is
  * pulled into the graph here via {@code @Module(includes = { ... })}.
  *
- * <p>Includes are fully qualified (no {@code import}) so a feature module named identically to an
- * AOSP one (e.g. {@code smartspace.SmartspaceModule} vs
- * {@code com.android.systemui.smartspace.dagger.SmartspaceModule}) cannot clash.
- *
  * <p>Wired here (contributions that merge into existing AOSP multibindings / optional bindings):
  * <ul>
  *   <li>AmbientIndicationModule — Now Playing lockscreen section + quick affordance.</li>
- *   <li>smartspace.SmartspaceModule — lockscreen date+weather BcSmartspace plugin bindings.</li>
  *   <li>QuickAffordanceModule — Calculator + Calendar lockscreen quick affordances.</li>
  *   <li>RefreshRateModule — pre-auth refresh-rate boost CoreStartable.</li>
  * </ul>
+ *
+ * <p>Smartspace is intentionally not provided here. Derp's SystemUI-core already binds the
+ * reverse-engineered Google BcSmartspace plugins and views under
+ * {@code com.google.android.systemui.smartspace} (consumed by
+ * {@code LockscreenSmartspaceController}). Replacing those with a lean Fundamental provider
+ * would duplicate Dagger bindings and would make Smartspacer's native-mode class probe miss
+ * {@code BcSmartspaceCard} / {@code uitemplate.*} / {@code WeatherSmartspaceView}.
  *
  * <p>NOT wired here (they override existing singleton bindings and would duplicate them; wired
  * instead by swapping modules inside {@code FundamentalReferenceSystemUIModule}):
@@ -31,7 +33,6 @@ import dagger.Module;
  */
 @Module(includes = {
         com.android.systemui.fundamental.ambientmusic.AmbientIndicationModule.class,
-        com.android.systemui.fundamental.smartspace.SmartspaceModule.class,
         com.android.systemui.fundamental.keyguard.quickaffordance.QuickAffordanceModule.class,
         com.android.systemui.fundamental.keyguard.refreshrate.RefreshRateModule.class,
 })
