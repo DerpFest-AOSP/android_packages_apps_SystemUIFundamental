@@ -25,6 +25,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.android.systemui.R;
 import com.android.systemui.plugins.BcSmartspaceDataPlugin;
 import com.android.systemui.plugins.FalsingManager;
 
@@ -103,7 +104,14 @@ public class WeatherSmartspaceView extends LinearLayout
         if (icon != null) {
             iconDrawable = icon.loadDrawable(getContext());
         }
-        mWeatherView.setCompoundDrawablesRelativeWithIntrinsicBounds(iconDrawable, null, null, null);
+        if (iconDrawable != null) {
+            // Weather glyphs arrive as full-size bitmaps; size them like stock's smartspace icon
+            // instead of using their intrinsic bounds.
+            int size = getResources().getDimensionPixelSize(
+                    R.dimen.fundamental_smartspace_icon_size);
+            iconDrawable.setBounds(0, 0, size, size);
+        }
+        mWeatherView.setCompoundDrawablesRelative(iconDrawable, null, null, null);
 
         setVisibility(VISIBLE);
         final SmartspaceAction tapAction = header;
