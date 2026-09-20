@@ -8,6 +8,7 @@ import com.android.systemui.bundle.phone.PodModulePhone;
 import com.android.systemui.controls.dagger.StartControlsStartableModule;
 import com.android.systemui.dagger.DefaultComponentBinder;
 import com.android.systemui.dagger.DependencyProvider;
+import com.android.systemui.dagger.DerpStartableModule;
 import com.android.systemui.fundamental.dagger.FundamentalReferenceSystemUIModule;
 import com.android.systemui.dagger.SysUIComponent;
 import com.android.systemui.dagger.SysUISingleton;
@@ -44,6 +45,7 @@ import dagger.Subcomponent;
         SystemUICoreStartableModule.class,
         SysUIUnfoldModule.class,
         WallpaperModule.class,
+        DerpStartableModule.class,
         FundamentalModule.class})
 public interface FundamentalSysUIComponent extends SysUIComponent {
 
