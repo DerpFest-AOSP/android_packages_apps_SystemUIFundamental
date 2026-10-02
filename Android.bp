@@ -25,12 +25,21 @@ android_library {
     javacflags: [
         "-Adagger.useBindingGraphFix=ENABLED",
     ],
-    kotlincflags: ["-Xjvm-default=all"],
+    kotlincflags: [
+        "-Xjvm-default=all",
+        "-P plugin:androidx.compose.compiler.plugins.kotlin:sourceInformation=true",
+    ],
     static_libs: [
         "SystemUI-application",
         "SystemUI-core",
         "SystemUIPluginLib",
         "SystemUISharedLib",
+        // Compose compiler is enabled by depending on androidx.compose.runtime_runtime.
+        // Needed by AmbientIndicationElementProvider (scene-container Now Playing slot).
+        "androidx.compose.runtime_runtime",
+        "androidx.compose.ui_ui",
+        "androidx.compose.foundation_foundation-layout",
+        "PlatformComposeSceneTransitionLayout",
         // Back-gesture ML classifier (BackGestureTfClassifierProviderGoogle).
         "tensorflowlite_java",
         // ASI matchmaker overview client for screenshot notification smart actions.

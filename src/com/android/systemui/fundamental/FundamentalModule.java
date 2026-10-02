@@ -12,7 +12,8 @@ import dagger.Module;
  *
  * <p>Wired here (contributions that merge into existing AOSP multibindings / optional bindings):
  * <ul>
- *   <li>AmbientIndicationModule — Now Playing lockscreen section + quick affordance.</li>
+ *   <li>AmbientIndicationModule — Now Playing lockscreen section, scene-container element, and
+ *       quick affordance.</li>
  *   <li>QuickAffordanceModule — Calculator + Calendar lockscreen quick affordances.</li>
  *   <li>RefreshRateModule — pre-auth refresh-rate boost CoreStartable.</li>
  * </ul>

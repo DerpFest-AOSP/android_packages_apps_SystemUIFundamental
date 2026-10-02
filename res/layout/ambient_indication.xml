@@ -4,7 +4,8 @@
   ~ Copyright (C) 2026 FundamentalOS
   ~
   ~ Overrides the empty SystemUI-core stub of the same name with the real passive Now Playing
-  ~ container. Inflated by DefaultAmbientIndicationAreaSection.addViews().
+  ~ container. Inflated by DefaultAmbientIndicationAreaSection (blueprint) and
+  ~ AmbientIndicationElementProvider (scene container / flexiglass).
   -->
 <com.android.systemui.fundamental.ambientmusic.AmbientIndicationContainer
     xmlns:android="http://schemas.android.com/apk/res/android"
