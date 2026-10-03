@@ -15,11 +15,6 @@
     <dimen name="ambient_indication_extended_text_container_end_padding">14dp</dimen>
     <dimen name="ambient_indication_extended_text_container_start_padding_collapsed">2dp</dimen>
     <dimen name="ambient_indication_extended_text_container_start_padding_expanded">16dp</dimen>
-    <!--
-      Gap between the UDFPS circle and the card. Scene container places this element flush
-      with the sensor; the blueprint keyguard section used to leave this space itself.
-    -->
-    <dimen name="fundamental_ambient_indication_udfps_gap">36dp</dimen>
     <!-- Entrance offsets for the first recognition, a song change and the searching state. -->
     <dimen name="ambient_indication_first_recognition_animation_translation_y">21.5dp</dimen>
     <dimen name="ambient_indication_song_change_animation_translation_y">21.5dp</dimen>

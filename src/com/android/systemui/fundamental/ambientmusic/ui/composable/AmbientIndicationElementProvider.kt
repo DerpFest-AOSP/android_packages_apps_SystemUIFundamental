@@ -37,7 +37,6 @@ import com.android.systemui.plugins.keyguard.ui.composable.elements.LockscreenEl
 import com.android.systemui.plugins.keyguard.ui.composable.elements.LockscreenScope
 import com.android.systemui.plugins.statusbar.StatusBarStateController
 import com.android.systemui.power.domain.interactor.PowerInteractor
-import com.android.systemui.R as AppR
 import com.android.systemui.res.R
 import com.android.systemui.shade.ShadeDisplayAware
 import com.android.systemui.util.concurrency.DelayableExecutor
@@ -109,18 +108,15 @@ constructor(
     @Composable
     private fun AmbientIndication(modifier: Modifier = Modifier) {
         val (disposable, setDisposable) = remember { mutableStateOf<DisposableHandle?>(null) }
-        // Scene container anchors this element on the lock-icon edge and ignores the view's
-        // layout margins. Pad the side that faces the icon: below the UDFPS circle, or above
-        // the rear fingerprint / lock glyph by the stock bottom margin.
-        val udfps = authController.isUdfpsSupported
-        val iconGap =
-            dimensionResource(
-                if (udfps) {
-                    AppR.dimen.fundamental_ambient_indication_udfps_gap
-                } else {
-                    R.dimen.ambient_indication_margin_bottom
-                }
-            )
+        // UDFPS placement is done by the scene-container root, which centers this element
+        // between the sensor and the shortcuts. Non-UDFPS still anchors the element on the
+        // top of the lock glyph and ignores the view's layout margin, so pad that side.
+        val aboveLockGlyph =
+            if (authController.isUdfpsSupported) {
+                0.dp
+            } else {
+                dimensionResource(R.dimen.ambient_indication_margin_bottom)
+            }
 
         AndroidView(
             factory = { ctx ->
@@ -136,12 +132,7 @@ constructor(
                 setDisposable(null)
             },
             modifier =
-                modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = if (udfps) iconGap else 0.dp,
-                        bottom = if (udfps) 0.dp else iconGap,
-                    ),
+                modifier.fillMaxWidth().padding(bottom = aboveLockGlyph),
         )
     }
 }
