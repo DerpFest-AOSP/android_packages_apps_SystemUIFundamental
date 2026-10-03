@@ -126,7 +126,14 @@ public final class AmbientIndicationService extends BroadcastReceiver {
     }
 
     private boolean isForCurrentUser() {
-        return getSendingUserId() == getCurrentUser() || getSendingUserId() == -1;
+        try {
+            int current = getCurrentUser();
+            int sender = getSendingUserId();
+            return sender == current || sender <= 0 || sender == -10000
+                    || sender == -1 || sender == -2;
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     private void onUserSwitched() {

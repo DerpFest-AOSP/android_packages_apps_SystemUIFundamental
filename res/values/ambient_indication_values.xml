@@ -32,6 +32,8 @@
 
     <!-- Wallpaper-picker / settings name for the "search a song" lock screen shortcut. -->
     <string name="now_playing_label">Now Playing</string>
+    <string name="ambient_music_searching">Identifying song</string>
+    <string name="ambient_music_no_match">Couldn\'t identify song</string>
     <!-- Accessibility action label on the collapsed Now Playing row. -->
     <string name="fundamental_accessibility_action_expand">Expand</string>
     <!-- Announced for a recognised song: %1$s = title, %2$s = artist. -->

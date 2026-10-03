@@ -6,6 +6,7 @@ package com.android.systemui.fundamental.ambientmusic;
 
 import com.android.systemui.CoreStartable;
 import com.android.systemui.fundamental.ambientmusic.keyguard.AmbientIndicationCoreStartable;
+import com.android.systemui.fundamental.ambientmusic.nonpixel.NonPixelAmbientIndicationCoreStartable;
 import com.android.systemui.fundamental.ambientmusic.quickaffordance.NowPlayingQuickAffordanceConfig;
 import com.android.systemui.fundamental.ambientmusic.ui.composable.AmbientIndicationElementProvider;
 import com.android.systemui.fundamental.ambientmusic.ui.sections.DefaultAmbientIndicationAreaSection;
@@ -46,6 +47,12 @@ public abstract class AmbientIndicationModule {
     @ClassKey(AmbientIndicationCoreStartable.class)
     abstract CoreStartable bindAmbientIndicationCoreStartable(
             AmbientIndicationCoreStartable impl);
+
+    @Binds
+    @IntoMap
+    @ClassKey(NonPixelAmbientIndicationCoreStartable.class)
+    abstract CoreStartable bindNonPixelAmbientIndicationCoreStartable(
+            NonPixelAmbientIndicationCoreStartable impl);
 
     @Binds
     @Named(KeyguardSectionsModule.KEYGUARD_AMBIENT_INDICATION_AREA_SECTION)

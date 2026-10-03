@@ -422,7 +422,7 @@ public final class AmbientIndicationContainer extends AutoReinflateContainer
             return;
         }
         wakeUpIfDozing();
-        if (mAmbientSkipUnlock) {
+        if (mAmbientSkipUnlock && mOpenIntent.isBroadcast()) {
             sendBroadcastWithoutDismissingKeyguard(mOpenIntent);
         } else {
             mActivityStarter.startPendingIntentDismissingKeyguard(mOpenIntent);
@@ -457,11 +457,16 @@ public final class AmbientIndicationContainer extends AutoReinflateContainer
         }
         if (mExtendedIndication.expandedIndicationData != null) {
             performExpandAnimation();
+            return;
         }
         PendingIntent expandIntent = mExtendedIndication.expandIntent;
         if (expandIntent != null) {
             wakeUpIfDozing();
             sendBroadcastWithoutDismissingKeyguard(expandIntent);
+            return;
+        }
+        if (mOpenIntent != null) {
+            onTextClick();
         }
     }
 
