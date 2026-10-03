@@ -8,10 +8,13 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.android.compose.animation.scene.ElementContentScope
 import com.android.systemui.biometrics.AuthController
@@ -34,6 +37,7 @@ import com.android.systemui.plugins.keyguard.ui.composable.elements.LockscreenEl
 import com.android.systemui.plugins.keyguard.ui.composable.elements.LockscreenScope
 import com.android.systemui.plugins.statusbar.StatusBarStateController
 import com.android.systemui.power.domain.interactor.PowerInteractor
+import com.android.systemui.R as AppR
 import com.android.systemui.res.R
 import com.android.systemui.shade.ShadeDisplayAware
 import com.android.systemui.util.concurrency.DelayableExecutor
@@ -69,7 +73,7 @@ constructor(
     @Background backgroundExecutor: Executor,
     notificationMediaManager: NotificationMediaManager,
     statusBarStateController: StatusBarStateController,
-    authController: AuthController,
+    private val authController: AuthController,
 ) : LockscreenElementProvider {
 
     private val dependencies =
@@ -105,6 +109,18 @@ constructor(
     @Composable
     private fun AmbientIndication(modifier: Modifier = Modifier) {
         val (disposable, setDisposable) = remember { mutableStateOf<DisposableHandle?>(null) }
+        // Scene container anchors this element on the lock-icon edge and ignores the view's
+        // layout margins. Pad the side that faces the icon: below the UDFPS circle, or above
+        // the rear fingerprint / lock glyph by the stock bottom margin.
+        val udfps = authController.isUdfpsSupported
+        val iconGap =
+            dimensionResource(
+                if (udfps) {
+                    AppR.dimen.fundamental_ambient_indication_udfps_gap
+                } else {
+                    R.dimen.ambient_indication_margin_bottom
+                }
+            )
 
         AndroidView(
             factory = { ctx ->
@@ -119,7 +135,13 @@ constructor(
                 disposable?.dispose()
                 setDisposable(null)
             },
-            modifier = modifier.fillMaxWidth(),
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = if (udfps) iconGap else 0.dp,
+                        bottom = if (udfps) 0.dp else iconGap,
+                    ),
         )
     }
 }
