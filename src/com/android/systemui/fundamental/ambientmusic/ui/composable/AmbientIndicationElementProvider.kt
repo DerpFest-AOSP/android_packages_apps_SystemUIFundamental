@@ -7,16 +7,26 @@ package com.android.systemui.fundamental.ambientmusic.ui.composable
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.scene.ElementContentScope
+import com.android.compose.theme.PlatformTheme
+import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipViewModel
+import com.android.systemui.axdynamicbar.ui.compose.AxDynamicBarKeyguardChip
 import com.android.systemui.biometrics.AuthController
 import com.android.systemui.common.ui.domain.interactor.ConfigurationInteractor
 import com.android.systemui.dagger.SysUISingleton
@@ -52,7 +62,8 @@ import kotlinx.coroutines.DisposableHandle
  * contributes an empty element at [ElementSource.STANDARD]. This provider contributes the same key
  * at [ElementSource.VENDOR], which outranks it, and hosts the same [AndroidView] binding the
  * blueprint section uses. With scene container enabled the blueprint section is not composed, so
- * this is the path that actually shows Now Playing.
+ * this is the path that actually shows Now Playing and the lockscreen dynamic-bar chip.
+ * The scene-container root centers this element in the open band under the clock.
  */
 @SysUISingleton
 class AmbientIndicationElementProvider
@@ -72,7 +83,8 @@ constructor(
     @Background backgroundExecutor: Executor,
     notificationMediaManager: NotificationMediaManager,
     statusBarStateController: StatusBarStateController,
-    private val authController: AuthController,
+    authController: AuthController,
+    private val axDynamicBarChipViewModel: AxDynamicBarChipViewModel,
 ) : LockscreenElementProvider {
 
     private val dependencies =
@@ -108,31 +120,49 @@ constructor(
     @Composable
     private fun AmbientIndication(modifier: Modifier = Modifier) {
         val (disposable, setDisposable) = remember { mutableStateOf<DisposableHandle?>(null) }
-        // UDFPS placement is done by the scene-container root, which centers this element
-        // between the sensor and the shortcuts. Non-UDFPS still anchors the element on the
-        // top of the lock glyph and ignores the view's layout margin, so pad that side.
-        val aboveLockGlyph =
-            if (authController.isUdfpsSupported) {
-                0.dp
-            } else {
-                dimensionResource(R.dimen.ambient_indication_margin_bottom)
-            }
+        var chipHeight by remember { mutableIntStateOf(0) }
+        val expanded by
+            axDynamicBarChipViewModel.isKeyguardExpanded.collectAsStateWithLifecycle()
 
-        AndroidView(
-            factory = { ctx ->
-                val view =
-                    LayoutInflater.from(ctx).inflate(R.layout.ambient_indication, null) as ViewGroup
-                setDisposable(
-                    KeyguardAmbientIndicationAreaViewBinder.bind(view, viewModel, dependencies)
+        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            PlatformTheme {
+                AxDynamicBarKeyguardChip(
+                    viewModel = axDynamicBarChipViewModel,
+                    modifier =
+                        Modifier.onSizeChanged { chipHeight = it.height }
+                            .then(
+                                if (expanded) {
+                                    Modifier.fillMaxSize()
+                                } else {
+                                    Modifier.widthIn(max = 260.dp)
+                                }
+                            ),
                 )
-                view
-            },
-            onRelease = {
-                disposable?.dispose()
-                setDisposable(null)
-            },
-            modifier =
-                modifier.fillMaxWidth().padding(bottom = aboveLockGlyph),
-        )
+            }
+            // The lockscreen chip and Now Playing share this slot. The chip wins while it is
+            // showing, including lyrics and the expanded island card.
+            if (chipHeight == 0) {
+                AndroidView(
+                    factory = { ctx ->
+                        val view =
+                            LayoutInflater.from(ctx).inflate(R.layout.ambient_indication, null)
+                                as ViewGroup
+                        setDisposable(
+                            KeyguardAmbientIndicationAreaViewBinder.bind(
+                                view,
+                                viewModel,
+                                dependencies,
+                            )
+                        )
+                        view
+                    },
+                    onRelease = {
+                        disposable?.dispose()
+                        setDisposable(null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
     }
 }
