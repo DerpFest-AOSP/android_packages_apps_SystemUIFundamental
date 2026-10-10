@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="now_playing_label">聽聲辨曲</string>
+    <string name="ambient_music_searching">正在辨識歌曲</string>
+    <string name="ambient_music_no_match">無法辨識歌曲</string>
+    <string name="fundamental_accessibility_action_expand">展開</string>
+    <string name="fundamental_accessibility_now_playing_container_recognition_result_content_description">已辨識歌曲。%1$s，%2$s。</string>
+    <string name="fundamental_accessibility_now_playing_container_song_searching_content_description">正在辨識歌曲</string>
+    <string name="fundamental_accessibility_now_playing_like_icon">從喜愛項目移除</string>
+    <string name="fundamental_accessibility_now_playing_play_icon">使用預設音樂播放器播放</string>
+    <string name="fundamental_accessibility_now_playing_unlike_icon">增加至喜愛項目</string>
+</resources>

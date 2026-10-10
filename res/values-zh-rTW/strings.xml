@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fundamental_quick_affordance_calculator_label">計算機</string>
+    <string name="fundamental_quick_affordance_calendar_label">日曆</string>
+</resources>
