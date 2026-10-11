@@ -40,7 +40,10 @@ class AmbientAudioRecorder {
     }
 
     @SuppressLint("MissingPermission")
-    suspend fun recordSample(durationSeconds: Int = 8): ByteArray? = withContext(Dispatchers.IO) {
+    suspend fun recordSample(
+        durationSeconds: Int = 8,
+        abortOnSilence: Boolean = true,
+    ): ByteArray? = withContext(Dispatchers.IO) {
         val minBufferSize = AudioRecord.getMinBufferSize(
             SAMPLE_RATE,
             CHANNEL_CONFIG,
@@ -56,58 +59,56 @@ class AmbientAudioRecorder {
         var audioRecord: AudioRecord? = null
 
         try {
-            // Try VOICE_RECOGNITION first to avoid heavy DSP audio processing routes; fallback to MIC
-            val audioSource = try {
-                val testRecord = AudioRecord(
-                    MediaRecorder.AudioSource.VOICE_RECOGNITION,
-                    SAMPLE_RATE,
-                    CHANNEL_CONFIG,
-                    AUDIO_FORMAT,
-                    bufferSize,
-                )
-                if (testRecord.state == AudioRecord.STATE_INITIALIZED) {
-                    audioRecord = testRecord
-                    MediaRecorder.AudioSource.VOICE_RECOGNITION
-                } else {
-                    testRecord.release()
-                    MediaRecorder.AudioSource.MIC
+            // MIC keeps music intact. VOICE_RECOGNITION applies speech processing that
+            // can strip a song down to silence, which is what Spacewar was capturing.
+            val sources = intArrayOf(
+                MediaRecorder.AudioSource.MIC,
+                MediaRecorder.AudioSource.UNPROCESSED,
+                MediaRecorder.AudioSource.VOICE_RECOGNITION,
+            )
+            for (source in sources) {
+                try {
+                    val candidate = AudioRecord(
+                        source,
+                        SAMPLE_RATE,
+                        CHANNEL_CONFIG,
+                        AUDIO_FORMAT,
+                        bufferSize,
+                    )
+                    if (candidate.state == AudioRecord.STATE_INITIALIZED) {
+                        audioRecord = candidate
+                        break
+                    }
+                    candidate.release()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Audio source $source unavailable", e)
                 }
-            } catch (e: Exception) {
-                MediaRecorder.AudioSource.MIC
             }
 
-            if (audioRecord == null) {
-                audioRecord = AudioRecord(
-                    audioSource,
-                    SAMPLE_RATE,
-                    CHANNEL_CONFIG,
-                    AUDIO_FORMAT,
-                    bufferSize,
-                )
-            }
-
-            if (audioRecord.state != AudioRecord.STATE_INITIALIZED) {
+            val record = audioRecord
+            if (record == null || record.state != AudioRecord.STATE_INITIALIZED) {
                 Log.e(TAG, "AudioRecord failed to initialize")
                 return@withContext null
             }
-
             val totalBytesTarget = SAMPLE_RATE * 2 * durationSeconds
             val outputStream = ByteArrayOutputStream(totalBytesTarget)
             val buffer = ByteArray(bufferSize)
 
-            audioRecord.startRecording()
+            record.startRecording()
             var bytesReadTotal = 0
             var earlySilenceChecked = false
 
             while (bytesReadTotal < totalBytesTarget && isActive) {
                 val bytesToRead = (totalBytesTarget - bytesReadTotal).coerceAtMost(buffer.size)
-                val read = audioRecord.read(buffer, 0, bytesToRead)
+                val read = record.read(buffer, 0, bytesToRead)
                 if (read > 0) {
                     outputStream.write(buffer, 0, read)
                     bytesReadTotal += read
 
                     // Early silence detection: check RMS after ~1 second of recorded audio
-                    if (!earlySilenceChecked && bytesReadTotal >= EARLY_SILENCE_CHECK_BYTES) {
+                    if (abortOnSilence && !earlySilenceChecked
+                        && bytesReadTotal >= EARLY_SILENCE_CHECK_BYTES
+                    ) {
                         earlySilenceChecked = true
                         val earlyBytes = outputStream.toByteArray()
                         val earlyRms = calculateRms(earlyBytes, earlyBytes.size)

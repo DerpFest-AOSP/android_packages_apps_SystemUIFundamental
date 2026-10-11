@@ -21,10 +21,13 @@ class HybridMusicRecognitionEngine(private val context: Context) {
     private val onlineEngine = OnlineSoundSearchEngine(context)
     private val mutex = Mutex()
 
-    suspend fun recognize(durationSeconds: Int = 8): SongResult? = withContext(Dispatchers.Default) {
+    suspend fun recognize(
+        durationSeconds: Int = 8,
+        abortOnSilence: Boolean = true,
+    ): SongResult? = withContext(Dispatchers.Default) {
         mutex.withLock {
             Log.d(TAG, "Starting audio capture for recognition (${durationSeconds}s)...")
-            val audioBytes = recorder.recordSample(durationSeconds) ?: run {
+            val audioBytes = recorder.recordSample(durationSeconds, abortOnSilence) ?: run {
                 Log.w(TAG, "No audio sample captured")
                 return@withLock null
             }

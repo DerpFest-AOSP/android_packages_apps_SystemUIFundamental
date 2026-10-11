@@ -112,6 +112,12 @@ class NonPixelAmbientIndicationService(
         ) == 1
     }
 
+    /** True while this device is outputting music, as opposed to sound near the phone. */
+    private fun isDevicePlayingMusic(): Boolean {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        return audioManager?.isMusicActive == true
+    }
+
     fun isOnDemandEnabled(): Boolean {
         return Settings.System.getIntForUser(
             context.contentResolver,
@@ -217,7 +223,8 @@ class NonPixelAmbientIndicationService(
         }
 
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-        if (audioManager?.isMusicActive == true || audioManager?.mode != AudioManager.MODE_NORMAL) {
+        // Own playback is not Now Playing. Only music near the phone should match.
+        if (isDevicePlayingMusic() || audioManager?.mode != AudioManager.MODE_NORMAL) {
             scheduleNextPeriodicRecognition()
             return
         }
@@ -228,8 +235,8 @@ class NonPixelAmbientIndicationService(
         activeRecognitionJob?.cancel()
         activeRecognitionJob = serviceScope.launch {
             try {
-                val result = hybridEngine.recognize(durationSeconds = 6)
-                if (result != null) {
+                val result = hybridEngine.recognize(durationSeconds = 6, abortOnSilence = true)
+                if (result != null && !isDevicePlayingMusic()) {
                     consecutiveSilentPasses = 0
                     withContext(Dispatchers.Main) {
                         handleEngineResult(result)
@@ -294,6 +301,11 @@ class NonPixelAmbientIndicationService(
     }
 
     fun startOnDemandRecognition() {
+        // The shortcut listens for a song near the phone. Playback on the phone
+        // would be what the mic hears, so it must not become a Now Playing result.
+        if (isDevicePlayingMusic()) {
+            return
+        }
         isPeriodicSearch = false
         triggerExternalRecognizers()
 
@@ -326,23 +338,34 @@ class NonPixelAmbientIndicationService(
         activeRecognitionJob?.cancel()
         activeRecognitionJob = serviceScope.launch {
             try {
-                val result = hybridEngine.recognize(durationSeconds = 8)
-                if (result != null) {
+                val result = hybridEngine.recognize(durationSeconds = 8, abortOnSilence = false)
+                if (result != null && !isDevicePlayingMusic()) {
                     consecutiveSilentPasses = 0
                     withContext(Dispatchers.Main) {
                         handleEngineResult(result)
                     }
-                } else if (isOnDemandEnabled() && isContinuousRecognitionEnabled()) {
+                } else if (isDevicePlayingMusic()) {
                     withContext(Dispatchers.Main) {
-                        showOnDemandSearchIcon()
+                        alarmManager.cancel(hideIndicationListener)
+                        ambientIndicationInteractor.hideAmbientMusic()
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        if (isOnDemandEnabled() && isContinuousRecognitionEnabled()) {
+                            showOnDemandSearchIcon()
+                        } else {
+                            handleRecognitionFailure()
+                        }
                     }
                 }
             } catch (e: CancellationException) {
                 // Cancelled for another recognition
             } catch (e: Exception) {
-                if (isOnDemandEnabled() && isContinuousRecognitionEnabled()) {
-                    withContext(Dispatchers.Main) {
+                withContext(Dispatchers.Main) {
+                    if (isOnDemandEnabled() && isContinuousRecognitionEnabled()) {
                         showOnDemandSearchIcon()
+                    } else {
+                        handleRecognitionFailure()
                     }
                 }
             }
