@@ -32,6 +32,7 @@ import com.android.systemui.common.ui.domain.interactor.ConfigurationInteractor
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.dagger.qualifiers.Main
+import com.android.systemui.fundamental.ambientmusic.shared.AmbientIndicationMusic
 import com.android.systemui.fundamental.ambientmusic.ui.binder.KeyguardAmbientIndicationAreaViewBinder
 import com.android.systemui.fundamental.ambientmusic.ui.viewmodel.KeyguardAmbientIndicationViewModel
 import com.android.systemui.graphics.ImageLoader
@@ -54,6 +55,7 @@ import com.android.systemui.util.wakelock.DelayedWakeLock
 import java.util.concurrent.Executor
 import javax.inject.Inject
 import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Fills the scene-container lockscreen slot [LockscreenElementKeys.AmbientIndicationArea].
@@ -124,24 +126,33 @@ constructor(
         val expanded by
             axDynamicBarChipViewModel.isKeyguardExpanded.collectAsStateWithLifecycle()
 
+        @Suppress("UNCHECKED_CAST")
+        val ambientMusic by
+            (viewModel.ambientMusicState as Flow<AmbientIndicationMusic?>)
+                .collectAsStateWithLifecycle(initialValue = null)
+        // A search or a recognized song has to be visible even while the battery or media
+        // chip is using this slot. Otherwise a long press starts recognition and the
+        // "Identifying song" line is never composed.
+        val showingNowPlaying = ambientMusic != null
+
         Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            PlatformTheme {
-                AxDynamicBarKeyguardChip(
-                    viewModel = axDynamicBarChipViewModel,
-                    modifier =
-                        Modifier.onSizeChanged { chipHeight = it.height }
-                            .then(
-                                if (expanded) {
-                                    Modifier.fillMaxSize()
-                                } else {
-                                    Modifier.widthIn(max = 260.dp)
-                                }
-                            ),
-                )
+            if (!showingNowPlaying) {
+                PlatformTheme {
+                    AxDynamicBarKeyguardChip(
+                        viewModel = axDynamicBarChipViewModel,
+                        modifier =
+                            Modifier.onSizeChanged { chipHeight = it.height }
+                                .then(
+                                    if (expanded) {
+                                        Modifier.fillMaxSize()
+                                    } else {
+                                        Modifier.widthIn(max = 260.dp)
+                                    }
+                                ),
+                    )
+                }
             }
-            // The lockscreen chip and Now Playing share this slot. The chip wins while it is
-            // showing, including lyrics and the expanded island card.
-            if (chipHeight == 0) {
+            if (showingNowPlaying || chipHeight == 0) {
                 AndroidView(
                     factory = { ctx ->
                         val view =
