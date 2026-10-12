@@ -73,6 +73,11 @@ public final class KeyguardAmbientIndicationViewModel {
         return mInteractor.getAmbientMusicState();
     }
 
+    /** {@code Flow<Boolean>} true while this phone is outputting media. */
+    public Flow getDevicePlayingMusic() {
+        return mInteractor.getDevicePlayingMusic();
+    }
+
     /** {@code Flow<Float>}: horizontal burn-in offset to apply to the area on AOD. */
     public Flow getIndicationAreaTranslationX() {
         return mIndicationAreaTranslationX;

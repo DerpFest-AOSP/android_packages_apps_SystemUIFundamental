@@ -130,10 +130,14 @@ constructor(
         val ambientMusic by
             (viewModel.ambientMusicState as Flow<AmbientIndicationMusic?>)
                 .collectAsStateWithLifecycle(initialValue = null)
+        @Suppress("UNCHECKED_CAST")
+        val devicePlayingMusic by
+            (viewModel.devicePlayingMusic as Flow<Boolean>)
+                .collectAsStateWithLifecycle(initialValue = false)
         // A search or a recognized song has to be visible even while the battery or media
-        // chip is using this slot. Otherwise a long press starts recognition and the
-        // "Identifying song" line is never composed.
-        val showingNowPlaying = ambientMusic != null
+        // chip is using this slot. Playback on the phone is not that song: keep the slot
+        // for the island.
+        val showingNowPlaying = ambientMusic != null && !devicePlayingMusic
 
         Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             if (!showingNowPlaying) {
@@ -152,7 +156,7 @@ constructor(
                     )
                 }
             }
-            if (showingNowPlaying || chipHeight == 0) {
+            if (showingNowPlaying || (chipHeight == 0 && !devicePlayingMusic)) {
                 AndroidView(
                     factory = { ctx ->
                         val view =

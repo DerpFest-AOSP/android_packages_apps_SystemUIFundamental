@@ -367,19 +367,34 @@ public final class AmbientIndicationContainer extends AutoReinflateContainer
     @Override
     public void onStateChanged(int newState) {
         mStatusBarState = newState;
-        setVisibility(newState == StatusBarState.KEYGUARD ? View.VISIBLE : View.INVISIBLE);
+        updateRootVisibility();
     }
 
     @Override
     public void onDozingChanged(boolean isDozing) {
         mDozing = isDozing;
-        setVisibility(mStatusBarState == StatusBarState.KEYGUARD ? View.VISIBLE : View.INVISIBLE);
+        updateRootVisibility();
         if (mUsingExtendedIndication && mExtendedContainer != null) {
             mExtendedContainer.setEnabled(!isDozing);
             updateColors();
         } else if (mTextView != null) {
             mTextView.setEnabled(!isDozing);
             updateColors();
+        }
+    }
+
+    /**
+     * An empty container still occupies the band under the fingerprint on UDFPS, which is the
+     * space the lockscreen island uses. Collapse it until there is a song or a search to show.
+     */
+    private void updateRootVisibility() {
+        boolean hasContent = mAmbientMusicText != null;
+        if (mStatusBarState == StatusBarState.KEYGUARD && hasContent) {
+            setVisibility(View.VISIBLE);
+        } else if (mStatusBarState == StatusBarState.KEYGUARD) {
+            setVisibility(View.GONE);
+        } else {
+            setVisibility(View.INVISIBLE);
         }
     }
 
@@ -1060,6 +1075,7 @@ public final class AmbientIndicationContainer extends AutoReinflateContainer
         mTextViewExtended.setVisibility(hasContent && isExtendedIndicationRecognitionResult()
                 && !TextUtils.isEmpty(mExtendedIndication.artistName) ? View.VISIBLE : View.GONE);
         mTextContainer.setVisibility(TextUtils.isEmpty(text) ? View.GONE : View.VISIBLE);
+        updateRootVisibility();
 
         // Song changed while the collapsed row is showing: slide the new title/artist in.
         if (!mIsCurrentlyInExpandedState && isExtendedIndicationRecognitionResult()

@@ -5,6 +5,10 @@
 package com.android.systemui.fundamental.ambientmusic.domain;
 
 import android.app.PendingIntent;
+import android.media.AudioManager;
+import android.media.AudioPlaybackConfiguration;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.fundamental.ambientmusic.data.AmbientIndicationRepository;
@@ -12,9 +16,13 @@ import com.android.systemui.fundamental.ambientmusic.shared.AmbientIndicationMus
 import com.android.systemui.fundamental.ambientmusic.shared.ExtendedIndication;
 import com.android.systemui.keyguard.domain.interactor.KeyguardInteractor;
 
+import java.util.List;
+
 import javax.inject.Inject;
 
 import kotlinx.coroutines.flow.Flow;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 
 /**
  * Bridges the {@link AmbientIndicationRepository} state and the core keyguard visibility flag.
@@ -27,13 +35,41 @@ public final class AmbientIndicationInteractor {
 
     private final AmbientIndicationRepository mRepository;
     private final KeyguardInteractor mKeyguardInteractor;
+    private final AudioManager mAudioManager;
+    /** {@code MutableStateFlow<Boolean>} — true while this phone is outputting media. */
+    private final MutableStateFlow mDevicePlayingMusic;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public AmbientIndicationInteractor(
             AmbientIndicationRepository repository,
-            KeyguardInteractor keyguardInteractor) {
+            KeyguardInteractor keyguardInteractor,
+            AudioManager audioManager) {
         mRepository = repository;
         mKeyguardInteractor = keyguardInteractor;
+        mAudioManager = audioManager;
+        mDevicePlayingMusic = StateFlowKt.MutableStateFlow(audioManager.isMusicActive());
+        audioManager.registerAudioPlaybackCallback(new AudioManager.AudioPlaybackCallback() {
+            @Override
+            public void onPlaybackConfigChanged(List<AudioPlaybackConfiguration> configs) {
+                boolean playing = mAudioManager.isMusicActive();
+                mDevicePlayingMusic.setValue(playing);
+                // Speakers (or a cast from this phone) are not music near the phone.
+                // Drop the indication so the lockscreen island can use the slot.
+                if (playing) {
+                    hideAmbientMusic();
+                }
+            }
+        }, new Handler(Looper.getMainLooper()));
+    }
+
+    /** {@code Flow<Boolean>} true while this phone is outputting media. */
+    public Flow getDevicePlayingMusic() {
+        return mDevicePlayingMusic;
+    }
+
+    private boolean isDevicePlayingMusic() {
+        return mAudioManager.isMusicActive();
     }
 
     /** {@code Flow<AmbientIndicationMusic>} of the current passive indication. */
@@ -58,6 +94,10 @@ public final class AmbientIndicationInteractor {
             Boolean skipUnlock,
             String iconDescription,
             ExtendedIndication extendedIndication) {
+        if (isDevicePlayingMusic()) {
+            hideAmbientMusic();
+            return;
+        }
         mRepository.setAmbientMusic(new AmbientIndicationMusic(
                 text, openIntent, favoritingIntent, iconOverride, skipUnlock, iconDescription,
                 extendedIndication));
