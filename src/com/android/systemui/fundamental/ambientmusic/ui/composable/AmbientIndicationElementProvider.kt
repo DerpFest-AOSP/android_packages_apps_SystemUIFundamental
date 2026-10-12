@@ -64,8 +64,9 @@ import kotlinx.coroutines.flow.Flow
  * contributes an empty element at [ElementSource.STANDARD]. This provider contributes the same key
  * at [ElementSource.VENDOR], which outranks it, and hosts the same [AndroidView] binding the
  * blueprint section uses. With scene container enabled the blueprint section is not composed, so
- * this is the path that actually shows Now Playing and the lockscreen dynamic-bar chip.
- * The scene-container root centers this element in the open band under the clock.
+ * this is the path that actually shows Now Playing. The lockscreen dynamic-bar chip lives
+ * between the shortcuts, except on a low fingerprint, where that row covers the sensor
+ * and the chip is drawn here instead, above the lock icon.
  */
 @SysUISingleton
 class AmbientIndicationElementProvider
@@ -125,6 +126,7 @@ constructor(
         var chipHeight by remember { mutableIntStateOf(0) }
         val expanded by
             axDynamicBarChipViewModel.isKeyguardExpanded.collectAsStateWithLifecycle()
+        val isLowUdfps by axDynamicBarChipViewModel.isLowUdfps.collectAsStateWithLifecycle()
 
         @Suppress("UNCHECKED_CAST")
         val ambientMusic by
@@ -134,13 +136,18 @@ constructor(
         val devicePlayingMusic by
             (viewModel.devicePlayingMusic as Flow<Boolean>)
                 .collectAsStateWithLifecycle(initialValue = false)
-        // A search or a recognized song has to be visible even while the battery or media
-        // chip is using this slot. Playback on the phone is not that song: keep the slot
-        // for the island.
+        // A search or a recognized song has to be visible even while the low-UDFPS chip
+        // is using this slot. Playback on the phone is not that song.
         val showingNowPlaying = ambientMusic != null && !devicePlayingMusic
+        val showNowPlayingView =
+            if (isLowUdfps) {
+                showingNowPlaying || chipHeight == 0
+            } else {
+                !devicePlayingMusic
+            }
 
         Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            if (!showingNowPlaying) {
+            if (isLowUdfps && !showingNowPlaying) {
                 PlatformTheme {
                     AxDynamicBarKeyguardChip(
                         viewModel = axDynamicBarChipViewModel,
@@ -156,7 +163,7 @@ constructor(
                     )
                 }
             }
-            if (showingNowPlaying || (chipHeight == 0 && !devicePlayingMusic)) {
+            if (showNowPlayingView) {
                 AndroidView(
                     factory = { ctx ->
                         val view =
