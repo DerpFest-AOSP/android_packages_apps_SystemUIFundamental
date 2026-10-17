@@ -8,8 +8,10 @@ import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.SystemClock
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -25,6 +27,9 @@ class AmbientAudioRecorder {
         const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
         const val SILENCE_RMS_THRESHOLD = 25.0
         private const val EARLY_SILENCE_CHECK_BYTES = SAMPLE_RATE * 2 * 1 // 1.0 second of audio
+        // Extra time allowed on top of the sample length before giving up on a stalled input
+        private const val READ_GRACE_MILLIS = 3000L
+        private const val READ_RETRY_MILLIS = 20L
     }
 
     private fun calculateRms(pcmBytes: ByteArray, length: Int): Double {
@@ -95,12 +100,20 @@ class AmbientAudioRecorder {
             val buffer = ByteArray(bufferSize)
 
             record.startRecording()
+            // Never hold the microphone longer than the sample needs: an input that delivers
+            // no data would otherwise block read() forever and keep the mic (and the DSP
+            // hotword, which pauses during capture) busy until reboot.
+            val deadline = SystemClock.elapsedRealtime() + durationSeconds * 1000L + READ_GRACE_MILLIS
             var bytesReadTotal = 0
             var earlySilenceChecked = false
 
             while (bytesReadTotal < totalBytesTarget && isActive) {
+                if (SystemClock.elapsedRealtime() > deadline) {
+                    Log.w(TAG, "Audio input stalled, giving up after $bytesReadTotal bytes")
+                    break
+                }
                 val bytesToRead = (totalBytesTarget - bytesReadTotal).coerceAtMost(buffer.size)
-                val read = record.read(buffer, 0, bytesToRead)
+                val read = record.read(buffer, 0, bytesToRead, AudioRecord.READ_NON_BLOCKING)
                 if (read > 0) {
                     outputStream.write(buffer, 0, read)
                     bytesReadTotal += read
@@ -120,6 +133,8 @@ class AmbientAudioRecorder {
                 } else if (read < 0) {
                     Log.e(TAG, "Error while reading audio buffer: $read")
                     break
+                } else {
+                    delay(READ_RETRY_MILLIS)
                 }
             }
 
