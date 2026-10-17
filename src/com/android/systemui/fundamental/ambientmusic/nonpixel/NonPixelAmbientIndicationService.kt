@@ -25,6 +25,7 @@ import com.android.keyguard.KeyguardUpdateMonitor
 import com.android.keyguard.KeyguardUpdateMonitorCallback
 import com.android.systemui.R
 import com.android.systemui.fundamental.ambientmusic.domain.AmbientIndicationInteractor
+import com.android.systemui.fundamental.ambientmusic.shared.AmbientIndicationMusic
 import com.android.systemui.fundamental.ambientmusic.shared.AmbientIndicationMusicStatus
 import com.android.systemui.fundamental.ambientmusic.shared.ExpandedIndicationData
 import com.android.systemui.fundamental.ambientmusic.shared.ExtendedIndication
@@ -107,7 +108,7 @@ class NonPixelAmbientIndicationService(
         return Settings.System.getIntForUser(
             context.contentResolver,
             "now_playing_enabled",
-            1,
+            0,
             UserHandle.USER_CURRENT,
         ) == 1
     }
@@ -125,6 +126,12 @@ class NonPixelAmbientIndicationService(
             0,
             UserHandle.USER_CURRENT,
         ) == 1
+    }
+
+    private fun isOnDemandPromptShowing(): Boolean {
+        val music = ambientIndicationInteractor.repository.ambientMusic.value
+            as? AmbientIndicationMusic
+        return music != null && TextUtils.isEmpty(music.text)
     }
 
     fun showOnDemandSearchIcon() {
@@ -159,6 +166,8 @@ class NonPixelAmbientIndicationService(
         if (isContinuousRecognitionEnabled()) {
             if (isOnDemandEnabled()) {
                 showOnDemandSearchIcon()
+            } else if (isOnDemandPromptShowing()) {
+                ambientIndicationInteractor.hideAmbientMusic()
             }
             scheduleNextPeriodicRecognition(5000L)
         } else {
@@ -303,7 +312,7 @@ class NonPixelAmbientIndicationService(
     fun startOnDemandRecognition() {
         // The shortcut listens for a song near the phone. Playback on the phone
         // would be what the mic hears, so it must not become a Now Playing result.
-        if (isDevicePlayingMusic()) {
+        if (!isContinuousRecognitionEnabled() || isDevicePlayingMusic()) {
             return
         }
         isPeriodicSearch = false
