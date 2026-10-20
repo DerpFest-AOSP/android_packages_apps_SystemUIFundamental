@@ -16,11 +16,18 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Handler;
+import android.util.Log;
 
 import com.android.systemui.graphics.ImageLoader;
 import com.android.systemui.monet.ColorScheme;
 import com.android.systemui.util.ColorUtilKt;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 /**
@@ -31,6 +38,9 @@ import java.util.Objects;
  */
 final class AmbientIndicationArtworkHelper {
 
+    private static final String TAG = "AmbientIndicationArtwork";
+    private static final int DOWNLOAD_TIMEOUT_MILLIS = 8000;
+    private static final int MAX_DOWNLOAD_BYTES = 8 * 1024 * 1024;
     /** Small thumbnail rendered behind the icon glyph while expanded. */
     private static final int SMALL_ICON_SIZE_DP = 48;
     /** Scrim gradient alphas (centre -> edge) laid over the scaled artwork. */
@@ -86,8 +96,7 @@ final class AmbientIndicationArtworkHelper {
             mainHandler.post(() -> callback.onArtworkProcessed(null, null, null, null));
             return;
         }
-        Bitmap bitmap = imageLoader.loadBitmapSync(new ImageLoader.Uri(albumArtUri, null),
-                targetWidth, targetWidth, ImageDecoder.ALLOCATOR_SOFTWARE);
+        Bitmap bitmap = loadBitmap(imageLoader, albumArtUri, targetWidth);
         if (bitmap == null) {
             mainHandler.post(() -> callback.onArtworkProcessed(null, null, albumArtUri, null));
             return;
@@ -136,5 +145,56 @@ final class AmbientIndicationArtworkHelper {
         bitmap.recycle();
         mainHandler.post(
                 () -> callback.onArtworkProcessed(artwork, colorScheme, albumArtUri, smallIcon));
+    }
+
+    /**
+     * {@link ImageLoader} resolves URIs through the ContentResolver, which cannot open web URLs,
+     * so artwork from online recognition (e.g. Shazam cover art) is downloaded here first.
+     */
+    private static Bitmap loadBitmap(ImageLoader imageLoader, Uri albumArtUri, int maxSize) {
+        String scheme = albumArtUri.getScheme();
+        if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+            return imageLoader.loadBitmapSync(new ImageLoader.Uri(albumArtUri, null),
+                    maxSize, maxSize, ImageDecoder.ALLOCATOR_SOFTWARE);
+        }
+        byte[] bytes = downloadArtwork(albumArtUri);
+        if (bytes == null) {
+            return null;
+        }
+        return imageLoader.loadBitmapSync(ImageDecoder.createSource(ByteBuffer.wrap(bytes)),
+                maxSize, maxSize, ImageDecoder.ALLOCATOR_SOFTWARE);
+    }
+
+    private static byte[] downloadArtwork(Uri albumArtUri) {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(albumArtUri.toString()).openConnection();
+            connection.setConnectTimeout(DOWNLOAD_TIMEOUT_MILLIS);
+            connection.setReadTimeout(DOWNLOAD_TIMEOUT_MILLIS);
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                Log.w(TAG, "Artwork download failed with HTTP " + connection.getResponseCode());
+                return null;
+            }
+            try (InputStream in = connection.getInputStream();
+                    ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    if (out.size() + read > MAX_DOWNLOAD_BYTES) {
+                        Log.w(TAG, "Artwork exceeds " + MAX_DOWNLOAD_BYTES + " bytes, skipping");
+                        return null;
+                    }
+                    out.write(buffer, 0, read);
+                }
+                return out.toByteArray();
+            }
+        } catch (IOException | ClassCastException e) {
+            Log.w(TAG, "Failed to download artwork", e);
+            return null;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 }
