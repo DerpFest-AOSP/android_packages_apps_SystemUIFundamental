@@ -16,6 +16,7 @@ import android.util.Log;
 
 import com.android.keyguard.KeyguardUpdateMonitorCallback;
 import com.android.systemui.fundamental.ambientmusic.domain.AmbientIndicationInteractor;
+import com.android.systemui.fundamental.ambientmusic.shared.AmbientIndicationMusic;
 import com.android.systemui.fundamental.ambientmusic.shared.AmbientIndicationMusicStatus;
 import com.android.systemui.fundamental.ambientmusic.shared.ExpandedIndicationData;
 import com.android.systemui.fundamental.ambientmusic.shared.ExtendedIndication;
@@ -140,6 +141,29 @@ public final class AmbientIndicationService extends BroadcastReceiver {
         mInteractor.hideAmbientMusic();
     }
 
+    /**
+     * ASI re-sends SHOW without the card payload when it recognises the same song again, e.g.
+     * right after the tap that expanded the card wakes the device. Dropping the payload there
+     * collapses the open card while the follow-up EXPAND is still on its way.
+     */
+    private ExpandedIndicationData getExpandedDataForSameSong(CharSequence songTitle,
+            CharSequence artistName) {
+        if (TextUtils.isEmpty(songTitle)) {
+            return null;
+        }
+        Object current = mInteractor.getRepository().ambientMusic.getValue();
+        if (!(current instanceof AmbientIndicationMusic)) {
+            return null;
+        }
+        ExtendedIndication previous = ((AmbientIndicationMusic) current).extendedIndication;
+        if (previous == null || previous.expandedIndicationData == null
+                || !TextUtils.equals(songTitle, previous.songTitle)
+                || !TextUtils.equals(artistName, previous.artistName)) {
+            return null;
+        }
+        return previous.expandedIndicationData;
+    }
+
     private void scheduleHide(long ttlMillis) {
         mAlarmManager.setExact(AlarmManager.ELAPSED_REALTIME,
                 SystemClock.elapsedRealtime() + ttlMillis, TAG, mHideIndicationListener, null);
@@ -186,13 +210,19 @@ public final class AmbientIndicationService extends BroadcastReceiver {
                 Log.i(TAG, "Using extended interaction: " + useExtendedInteraction);
                 ExtendedIndication extended = null;
                 if (useExtendedInteraction) {
+                    boolean isRecognitionResult =
+                            intent.getBooleanExtra(EXTRA_IS_RECOGNITION_RESULT, false);
+                    boolean isSongSearching =
+                            intent.getBooleanExtra(EXTRA_IS_SONG_SEARCHING, false);
                     extended = new ExtendedIndication(
                             songTitle,
                             artistName,
                             intent.getParcelableExtra(EXTRA_EXPAND_INTENT, PendingIntent.class),
-                            intent.getBooleanExtra(EXTRA_IS_RECOGNITION_RESULT, false),
-                            intent.getBooleanExtra(EXTRA_IS_SONG_SEARCHING, false),
-                            null);
+                            isRecognitionResult,
+                            isSongSearching,
+                            isRecognitionResult && !isSongSearching
+                                    ? getExpandedDataForSameSong(songTitle, artistName)
+                                    : null);
                 }
                 mInteractor.setAmbientMusic(text, openIntent, favoritingIntent,
                         Integer.valueOf(iconOverride), Boolean.valueOf(skipUnlock),

@@ -987,7 +987,9 @@ public final class AmbientIndicationContainer extends AutoReinflateContainer
         AmbientIndicationAnimationHelper.animateTextColors(
                 Arrays.asList(mTextView, mTextViewExtended), textColor);
 
-        mCurrentLoadedAlbumArtUri = albumArtUri;
+        // ASI can hand over the URI before it has downloaded the cover. Leave a failed load
+        // unrecorded so the next EXPAND for the same URI tries again.
+        mCurrentLoadedAlbumArtUri = artwork != null ? albumArtUri : null;
     }
 
     // ---------------------------------------------------------------------------------------
