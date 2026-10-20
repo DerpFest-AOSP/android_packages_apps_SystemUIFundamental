@@ -66,6 +66,7 @@ constructor(
             return
         }
         nonPixelAmbientIndicationService.started = true
+        ambientIndicationInteractor.setHideWhileDevicePlaysMusic(true)
 
         val intentFilter =
             IntentFilter().apply {

@@ -38,6 +38,7 @@ public final class AmbientIndicationInteractor {
     private final AudioManager mAudioManager;
     /** {@code MutableStateFlow<Boolean>} — true while this phone is outputting media. */
     private final MutableStateFlow mDevicePlayingMusic;
+    private boolean mHideWhileDevicePlaysMusic;
 
     @Inject
     @SuppressWarnings("unchecked")
@@ -48,11 +49,11 @@ public final class AmbientIndicationInteractor {
         mRepository = repository;
         mKeyguardInteractor = keyguardInteractor;
         mAudioManager = audioManager;
-        mDevicePlayingMusic = StateFlowKt.MutableStateFlow(audioManager.isMusicActive());
+        mDevicePlayingMusic = StateFlowKt.MutableStateFlow(false);
         audioManager.registerAudioPlaybackCallback(new AudioManager.AudioPlaybackCallback() {
             @Override
             public void onPlaybackConfigChanged(List<AudioPlaybackConfiguration> configs) {
-                boolean playing = mAudioManager.isMusicActive();
+                boolean playing = isDevicePlayingMusic();
                 mDevicePlayingMusic.setValue(playing);
                 // Speakers (or a cast from this phone) are not music near the phone.
                 // Drop the indication so the lockscreen island can use the slot.
@@ -63,13 +64,25 @@ public final class AmbientIndicationInteractor {
         }, new Handler(Looper.getMainLooper()));
     }
 
+    /**
+     * Only the in-tree recognizer needs this: it listens through the microphone and would pick
+     * up the phone's own playback. ASI already ignores that, and {@code isMusicActive()} is also
+     * true for silent or short media-stream tracks (games, ads, idle players), which would drop
+     * real ASI results and its on-demand prompt.
+     */
+    @SuppressWarnings("unchecked")
+    public void setHideWhileDevicePlaysMusic(boolean enabled) {
+        mHideWhileDevicePlaysMusic = enabled;
+        mDevicePlayingMusic.setValue(isDevicePlayingMusic());
+    }
+
     /** {@code Flow<Boolean>} true while this phone is outputting media. */
     public Flow getDevicePlayingMusic() {
         return mDevicePlayingMusic;
     }
 
     private boolean isDevicePlayingMusic() {
-        return mAudioManager.isMusicActive();
+        return mHideWhileDevicePlaysMusic && mAudioManager.isMusicActive();
     }
 
     /** {@code Flow<AmbientIndicationMusic>} of the current passive indication. */
