@@ -19,7 +19,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -182,9 +184,22 @@ constructor(
                         disposable?.dispose()
                         setDisposable(null)
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().hiddenWhenTallerThanSlot(),
                 )
             }
         }
+    }
+}
+
+/**
+ * The lockscreen bounds this slot to the free band, so a card that does not fit there takes no
+ * space instead of being squashed. The root layout then hides the empty slot as before.
+ */
+private fun Modifier.hiddenWhenTallerThanSlot(): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(maxHeight = Constraints.Infinity))
+    if (placeable.height > constraints.maxHeight) {
+        layout(constraints.minWidth, 0) {}
+    } else {
+        layout(placeable.width, placeable.height) { placeable.place(0, 0) }
     }
 }
